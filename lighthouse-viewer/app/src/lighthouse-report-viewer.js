@@ -37,6 +37,7 @@ class LighthouseViewerReport {
   constructor() {
     this.onShare = this.onShare.bind(this);
     this.onFileUpload = this.onFileUpload.bind(this);
+    this.onPaste = this.onPaste.bind(this);
 
     this.json = null;
     this.fileUploader = new FileUploader(this.onFileUpload);
@@ -58,6 +59,8 @@ class LighthouseViewerReport {
     if (shareButton) {
       shareButton.addEventListener('click', this.onShare);
     }
+
+    document.addEventListener('paste', this.onPaste);
   }
 
   loadFromURL() {
@@ -163,6 +166,22 @@ class LighthouseViewerReport {
       history.pushState({}, null, `${APP_URL}?gist=${id}`);
       return id;
     }).catch(err => logger.log(err.message));
+  }
+
+  /**
+   * Enables pasting a JSON report on the page.
+   */
+  onPaste(e) {
+    e.preventDefault();
+
+    ga('send', 'event', 'report', 'paste');
+
+    try {
+      const json = JSON.parse(e.clipboardData.getData('text'));
+      this.replaceReportHTML(json);
+    } catch (err) {
+      // noop
+    }
   }
 }
 
