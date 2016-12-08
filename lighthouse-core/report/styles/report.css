@@ -82,7 +82,7 @@ html, body {
   height: 100%;
 }
 
-/* When deep linking to a section, bump the headind down so it's not covered by the header. */
+/* When deep linking to a section, bump the heading down so it's not covered by the top nav. */
 :target.aggregations {
   padding-top: calc(var(--report-header-height) + var(--heading-line-height)) !important;
 }
@@ -187,6 +187,7 @@ body {
   min-width: 230px;
   max-width: var(--report-width);
   position: fixed;
+  will-change: transform;
   left: 50%;
   transform: translateX(-50%);
   top: 0;
@@ -196,7 +197,6 @@ body {
 .menu {
   width: var(--report-menu-width);
   background: #FFFFFF;
-  /*min-width: 185px;*/
   height: 100%;
   top: 0;
   left: 0;
@@ -330,6 +330,7 @@ body {
   justify-content: flex-end;
   padding: 0 var(--heading-line-height);
   position: fixed;
+  will-change: transform;
   z-index: 1;
   max-width: calc( var(--report-width) - var(--report-menu-width));
   width: calc(100vw - var(--report-menu-width));
