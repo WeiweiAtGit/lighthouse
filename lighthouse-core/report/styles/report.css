@@ -329,11 +329,10 @@ body {
   align-items: center;
   justify-content: flex-end;
   padding: 0 var(--heading-line-height);
-
   position: fixed;
   z-index: 1;
-  width: 100%;
   max-width: calc( var(--report-width) - var(--report-menu-width));
+  width: calc(100vw - var(--report-menu-width));
 }
 
 .report-section__title {
