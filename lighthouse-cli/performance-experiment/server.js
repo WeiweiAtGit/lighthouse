@@ -29,6 +29,7 @@ const path = require('path');
 const opn = require('opn');
 const log = require('../../lighthouse-core/lib/log');
 const ReportGenerator = require('../../lighthouse-core/report/report-generator');
+const lighthouse = require('../../lighthouse-core');
 
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
@@ -37,7 +38,9 @@ const ReportGenerator = require('../../lighthouse-core/report/report-generator')
  * @return {!Promise<string>} Promise that resolves when server is closed
  */
 let lhResults;
-function serveAndOpenReport(lighthouseParams, results) {
+let lhParams;
+function hostExperiment(lighthouseParams, results) {
+  lhParams = lighthouseParams;
   lhResults = results;
   return new Promise(resolve => {
     const server = http.createServer(requestHandler);
@@ -55,13 +58,18 @@ function serveAndOpenReport(lighthouseParams, results) {
 
 function requestHandler(request, response) {
   const pathname = path.normalize(parse(request.url).pathname);
-
-  if (pathname === '/') {
-    reportRequestHandler(request, response);
+  if (request.method === 'GET') {
+    if (pathname === '/') {
+      reportRequestHandler(request, response);
+    } else if (pathname === '/rerun') {
+      rerunRequestHandler(request, response);
+    } else {
+      response.writeHead(404);
+      response.end('404: Resource Not Found');
+    }
   } else {
-    response.writeHead(400);
-    response.write('400 - Bad request');
-    response.end();
+    response.writeHead(405);
+    response.end('405: Method Not Supported');
   }
 }
 
@@ -69,9 +77,16 @@ function reportRequestHandler(request, response) {
   const reportGenerator = new ReportGenerator();
   const html = reportGenerator.generateHTML(lhResults, 'cli');
   response.writeHead(200, {'Content-Type': 'text/html'});
-  response.write(html);
-  response.end();
+  response.end(html);
 }
+
+function rerunRequestHandler(request, response) {
+  lighthouse(lhParams.url, lhParams.flags, lhParams.configs).then(results => {
+    response.writeHead(200, {'Content-Type': 'text/json'});
+    response.end(JSON.stringify(results));
+  });
+}
+
 
 module.exports = {
   serveAndOpenReport
