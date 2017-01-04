@@ -70,6 +70,13 @@ function requestHandler(request, response) {
       response.writeHead(404);
       response.end('404: Resource Not Found');
     }
+  } else if (request.method === 'POST') {
+    if (pathname === '/rerun') {
+      rerunRequestHandler(request, response);
+    } else {
+      response.writeHead(404);
+      response.end('404: Resource Not Found');
+    }
   } else {
     response.writeHead(405);
     response.end('405: Method Not Supported');
@@ -84,10 +91,24 @@ function reportRequestHandler(request, response) {
 }
 
 function rerunRequestHandler(request, response) {
-  lighthouse(lhParams.url, lhParams.flags, lhParams.configs).then(results => {
-    response.writeHead(200, {'Content-Type': 'text/json'});
-    response.end(JSON.stringify(results));
-  });
+  try {
+    let message = '';
+    request.on('data', data => message += data);
+
+    request.on('end', () => {
+      const additionalFlags = JSON.parse(message);
+
+      // Add more to flags without changing the original flags
+      const flags = Object.assign({}, lhParams.flags, additionalFlags);
+      lighthouse(lhParams.url, flags, lhParams.configs).then(results => {
+        response.writeHead(200, {'Content-Type': 'text/json'});
+        response.end(JSON.stringify(results));
+      });
+    });
+  } catch (e) {
+    response.writeHead(500);
+    response.end('500: Internal Server Error');
+  }
 }
 
 
