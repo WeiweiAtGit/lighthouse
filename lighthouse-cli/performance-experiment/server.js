@@ -42,7 +42,7 @@ const lighthouse = require('../../lighthouse-core');
  */
 let lhResults;
 let lhParams;
-function hostExperiment(lighthouseParams, results) {
+function serveAndOpenReport(lighthouseParams, results) {
   lhParams = lighthouseParams;
   lhResults = results;
   return new Promise(resolve => {
@@ -113,5 +113,5 @@ function rerunRequestHandler(request, response) {
 
 
 module.exports = {
-  hostExperiment
+  serveAndOpenReport
 };
