@@ -20,7 +20,10 @@
  * @fileoverview Server script for Project Performance Experiment.
  *
  * Functionality:
- *   Host and open report page.
+ *    Host experiment.
+ *    Report can be access via URL http://localhost:[PORT]/
+ *    Rerun data can be access via URL http://localhost:[PORT]/rerun.
+ *      This will rerun lighthouse with same parameters and rerun results in JSON format
  */
 
 const http = require('http');
@@ -89,5 +92,5 @@ function rerunRequestHandler(request, response) {
 
 
 module.exports = {
-  serveAndOpenReport
+  hostExperiment
 };
