@@ -207,7 +207,7 @@ class ReportGenerator {
    */
   getReportJS(reportContext) {
     const scriptList = [];
-    
+
     if (reportContext === 'devtools') {
       return scriptList;
     }

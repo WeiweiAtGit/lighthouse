@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-/* global window, document */
-
 'use strict';
 /**
  * @fileoverview Report script for Project Performance Experiment.
@@ -27,11 +25,13 @@
 
 /**
  * Send request to rerun lighthouse with additional cli-flags.
- * Some cli-flags will be ignored. 
+ * Some cli-flags will be ignored.
  	- Flags which are not applicable to rerun lighthouse (e.g. --list-all-audits, --help)
  	- config related flags (e.g. --config-path). Always use perf-olny config for rerunning.
  * @param {!Object} additionalFlags
  */
+
+/* exported rerunLighthouse */
 function rerunLighthouse(additionalFlags={}) {
 	fetch('/rerun', {method: 'POST', body: JSON.stringify(additionalFlags)})
 		.then(response => response.json())
