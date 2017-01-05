@@ -30,9 +30,11 @@ const http = require('http');
 const parse = require('url').parse;
 const path = require('path');
 const opn = require('opn');
+const stringify = require('json-stringify-safe');
 const log = require('../../lighthouse-core/lib/log');
 const ReportGenerator = require('../../lighthouse-core/report/report-generator');
 const lighthouse = require('../../lighthouse-core');
+const perfOnlyConfig = require('../../lighthouse-core/config/perf.json');
 
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
@@ -85,7 +87,7 @@ function requestHandler(request, response) {
 
 function reportRequestHandler(request, response) {
   const reportGenerator = new ReportGenerator();
-  const html = reportGenerator.generateHTML(lhResults, 'cli');
+  const html = reportGenerator.generateHTML(lhResults, 'perf-x');
   response.writeHead(200, {'Content-Type': 'text/html'});
   response.end(html);
 }
@@ -100,9 +102,10 @@ function rerunRequestHandler(request, response) {
 
       // Add more to flags without changing the original flags
       const flags = Object.assign({}, lhParams.flags, additionalFlags);
-      lighthouse(lhParams.url, flags, lhParams.configs).then(results => {
+      lighthouse(lhParams.url, flags, perfOnlyConfig).then(results => {
+        results.artifacts = undefined;
         response.writeHead(200, {'Content-Type': 'text/json'});
-        response.end(JSON.stringify(results));
+        response.end(stringify(results));
       });
     });
   } catch (e) {
