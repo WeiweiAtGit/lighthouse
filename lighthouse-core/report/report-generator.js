@@ -203,17 +203,21 @@ class ReportGenerator {
   /**
    * Gets the script for the report UI
    * @param {string} reportContext
-   * @return {string}
+   * @return {Array<string>}
    */
   getReportJS(reportContext) {
-    switch (reportContext) {
-      case 'devtools':
-        return fs.readFileSync(path.join(__dirname, './scripts/lighthouse-report.js'), 'utf8');
-      case 'perf-x':
-        return fs.readFileSync(path.join(__dirname, './scripts/perf-x-api.js'), 'utf8');
-      default:
-        return '';
+    const scriptList = [];
+    
+    if (reportContext === 'devtools') {
+      return scriptList;
     }
+
+    if (reportContext === 'perf-x') {
+      scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/perf-x-api.js')));
+    }
+
+    scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/lighthouse-report.js')));
+    return scriptList;
   }
 
   /**
@@ -311,7 +315,7 @@ class ReportGenerator {
       lhresults: this._escapeScriptTags(JSON.stringify(results, null, 2)),
       css: this.getReportCSS(),
       reportContext: reportContext,
-      script: this.getReportJS(reportContext),
+      scripts: this.getReportJS(reportContext),
       aggregations: results.aggregations,
       auditsByCategory: this._createPWAAuditsByCategory(results.aggregations)
     });
