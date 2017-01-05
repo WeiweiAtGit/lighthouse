@@ -215,7 +215,7 @@ class ReportGenerator {
     if (reportContext !== 'devtools') {
       scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/lighthouse-report.js')));
     }
-    
+
     return scriptList;
   }
 
