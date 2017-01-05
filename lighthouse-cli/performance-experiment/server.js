@@ -66,8 +66,6 @@ function requestHandler(request, response) {
   if (request.method === 'GET') {
     if (pathname === '/') {
       reportRequestHandler(request, response);
-    } else if (pathname === '/rerun') {
-      rerunRequestHandler(request, response);
     } else {
       response.writeHead(404);
       response.end('404: Resource Not Found');
