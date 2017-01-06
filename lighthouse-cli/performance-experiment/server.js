@@ -28,30 +28,27 @@
 
 const http = require('http');
 const parse = require('url').parse;
-const path = require('path');
 const opn = require('opn');
-const stringify = require('json-stringify-safe');
 const log = require('../../lighthouse-core/lib/log');
-const ReportGenerator = require('../../lighthouse-core/report/report-generator');
+const reportGenerator = new (require('../../lighthouse-core/report/report-generator'))();
 const lighthouse = require('../../lighthouse-core');
 const perfOnlyConfig = require('../../lighthouse-core/config/perf.json');
 
+const hostedExperiments = [];
+
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
- * @param {!Object} lighthouseParams
+ * @param {!Object} params A JSON contains lighthouse parameters
  * @param {!Object} results
  * @return {!Promise<string>} Promise that resolves when server is closed
  */
-let lhResults;
-let lhParams;
-function serveAndOpenReport(lighthouseParams, results) {
-  lhParams = lighthouseParams;
-  lhResults = results;
+function hostExperiment(params, results) {
+  hostedExperiments.push({params, results});
   return new Promise(resolve => {
     const server = http.createServer(requestHandler);
     server.listen(0);
     server.on('listening', () => {
-      opn(`http://localhost:${server.address().port}/`);
+      opn(`http://localhost:${server.address().port}/?id=0`);
     });
     server.on('error', err => log.error('PerformanceXServer', err.code, err));
     server.on('close', resolve);
@@ -62,7 +59,9 @@ function serveAndOpenReport(lighthouseParams, results) {
 }
 
 function requestHandler(request, response) {
-  const pathname = path.normalize(parse(request.url).pathname);
+  request.parsedUrl = parse(request.url, true);
+  const pathname = request.parsedUrl.pathname;
+
   if (request.method === 'GET') {
     if (pathname === '/') {
       reportRequestHandler(request, response);
@@ -84,35 +83,46 @@ function requestHandler(request, response) {
 }
 
 function reportRequestHandler(request, response) {
-  const reportGenerator = new ReportGenerator();
-  const html = reportGenerator.generateHTML(lhResults, 'perf-x');
+  const experimentData = hostedExperiments[request.parsedUrl.query.id];
+  if (!experimentData) {
+    response.writeHead(404);
+    response.end('404: Resource Not Found');
+    return;
+  }
+
+  const html = reportGenerator.generateHTML(experimentData.results, 'perf-x');
   response.writeHead(200, {'Content-Type': 'text/html'});
   response.end(html);
 }
 
 function rerunRequestHandler(request, response) {
-  try {
-    let message = '';
-    request.on('data', data => message += data);
-
-    request.on('end', () => {
-      const additionalFlags = JSON.parse(message);
-
-      // Add more to flags without changing the original flags
-      const flags = Object.assign({}, lhParams.flags, additionalFlags);
-      lighthouse(lhParams.url, flags, perfOnlyConfig).then(results => {
-        results.artifacts = undefined;
-        response.writeHead(200, {'Content-Type': 'text/json'});
-        response.end(stringify(results));
-      });
-    });
-  } catch (e) {
-    response.writeHead(500);
-    response.end('500: Internal Server Error');
+  const experimentData = hostedExperiments[request.parsedUrl.query.id];
+  if (!experimentData) {
+    response.writeHead(404);
+    response.end('404: Resource Not Found');
+    return;
   }
+
+  let message = '';
+  request.on('data', data => message += data);
+
+  request.on('end', () => {
+    const url = experimentData.params.url;
+
+    // Add more to flags without changing the original flags
+    const additionalFlags = JSON.parse(message);
+    const flags = Object.assign({}, experimentData.params.flags, additionalFlags);
+
+    lighthouse(url, flags, perfOnlyConfig).then(results => {
+      results.artifacts = undefined;
+      hostedExperiments.push({params: {url, flags}, results});
+      response.writeHead(200, {'Content-Type': 'text/plain'});
+      response.end(`/?id=${hostedExperiments.length - 1}`);
+    });
+  });
 }
 
 
 module.exports = {
-  serveAndOpenReport
+  hostExperiment
 };

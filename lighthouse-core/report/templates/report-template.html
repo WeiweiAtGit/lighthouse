@@ -46,6 +46,13 @@ limitations under the License.
             <a href="#" data-action="save-json">Save as JSON...</a>
           </ul>
         </span>
+        <span class="rerun-section">
+          <button class="report-body__icon rerun-button js-rerun-button"></button>
+          <div class="rerun-popup js-rerun-popup" status="idle">
+            <p class="rerun-message">Rerunning Lighthouse</p>
+            <a class="rerun-report js-rerun-report" target="_blank">New Report</a>
+          </div>
+        </span>
         <button class="report-body__icon share js-share"></button>
         <button class="report-body__icon copy js-copy"></button>
         {{#if_not_eq reportContext "viewer"}}

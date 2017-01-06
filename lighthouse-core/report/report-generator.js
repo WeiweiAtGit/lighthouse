@@ -209,11 +209,12 @@ class ReportGenerator {
     const scriptList = [];
 
     if (reportContext === 'perf-x') {
-      scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/perf-x-api.js')));
+      scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/perf-x.js'), 'utf8'));
     }
 
     if (reportContext !== 'devtools') {
-      scriptList.push(fs.readFileSync(path.join(__dirname, './scripts/lighthouse-report.js')));
+      scriptList.push(fs.readFileSync(
+        path.join(__dirname, './scripts/lighthouse-report.js'), 'utf8'));
     }
 
     return scriptList;
