@@ -83,7 +83,7 @@ const cliFlags = yargs
     'port': 'The port to use for the debugging protocol. Use 0 for a random port',
     'skip-autolaunch': 'Skip autolaunch of Chrome when already running instance is not found',
     'select-chrome': 'Interactively choose version of Chrome to use when multiple installations are found',
-    'interactive': 'Open lighthouse in interactive mode'
+    'interactive': 'Open Lighthouse in interactive mode'
   })
 
   .group([
