@@ -25,8 +25,6 @@
  * Include functions for supporting interation between report page and Perf-X server.
  */
 
-const reportId = /id=(\d*)/.exec(window.location.href)[1];
-
 window.addEventListener('DOMContentLoaded', _ => {
   const rerunButton = document.querySelector('.js-rerun-button');
   rerunButton.style.display = 'inline-block';
@@ -35,8 +33,7 @@ window.addEventListener('DOMContentLoaded', _ => {
   const rerunReport = document.querySelector('.js-rerun-report');
   rerunButton.addEventListener('click', () => {
     rerunPopup.setAttribute('status', 'running');
-    rerunLighthouse().then(url => {
-      rerunReport.href = url;
+    rerunLighthouse().then(() => {
       rerunPopup.setAttribute('status', 'complete');
     });
   });
@@ -56,6 +53,6 @@ window.addEventListener('DOMContentLoaded', _ => {
  * @return {!String} URL where new report can be accessed
  */
 function rerunLighthouse(additionalFlags={}) {
-  return fetch(`/rerun?id=${reportId}`, {method: 'POST', body: JSON.stringify(additionalFlags)})
+  return fetch('/rerun', {method: 'POST', body: JSON.stringify(additionalFlags)})
     .then(response => response.text());
 }
