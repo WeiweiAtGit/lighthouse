@@ -832,23 +832,31 @@ body {
   border: 1px solid #ccc;
   border-radius: 3px;
   padding: 8px;
-  left: -25px;
+  right: -36px;
   top: 36px;
   z-index: 1;
   box-shadow: 1px 1px 3px #ccc;
   min-width: 100px;
 }
 
-.rerun-popup[status=idle] {
+.rerun-popup[status=inactive] {
   display: none;
 }
 
-.rerun-popup[status=running] .rerun-report-link {
+.rerun-popup > * {
   display: none;
 }
 
-.rerun-popup[status=complete] .rerun-message {
-  display: none;
+.rerun-popup[status=running] .rerun-message {
+  display: block;
+}
+
+.rerun-popup[status=complete] .rerun-report-link {
+  display: block;
+}
+
+.rerun-popup[status=active] .rerun-form {
+  display: block;
 }
 
 @media print {

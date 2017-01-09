@@ -31,15 +31,28 @@ window.addEventListener('DOMContentLoaded', _ => {
 
   const rerunPopup = document.querySelector('.js-rerun-popup');
   rerunButton.addEventListener('click', () => {
-    rerunPopup.setAttribute('status', 'running');
-    rerunLighthouse().then(() => {
-      rerunPopup.setAttribute('status', 'complete');
-    });
+    if (rerunPopup.getAttribute('status') === 'inactive') {
+      rerunPopup.setAttribute('status', 'active');
+    } else {
+      rerunPopup.setAttribute('status', 'inactive');
+    }
   });
 
-  const rerunReportLink = document.querySelector('.js-rerun-report-link');
-  rerunReportLink.addEventListener('click', () => {
-    rerunPopup.setAttribute('status', 'idle');
+  const rerunForm = document.querySelector('.js-rerun-form');
+  rerunForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    rerunPopup.setAttribute('status', 'running');
+
+    const formData = new FormData(rerunForm);
+    const flags = {};
+    const blockedUrlPatterns = formData.get('blockedUrlPatterns').trim().split(/\s+/);
+    flags.blockedUrlPatterns = blockedUrlPatterns.filter(ele => ele !== '');
+    const blockedMimeTypes = formData.get('blockedMimeTypes').trim().split(/\s+/);
+    flags.blockedMimeTypes = blockedMimeTypes.filter(ele => ele !== '');
+
+    rerunLighthouse(flags).then(() => {
+      rerunPopup.setAttribute('status', 'complete');
+    });
   });
 });
 

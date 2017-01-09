@@ -101,14 +101,10 @@ function rerunRequestHandler(request, response) {
   request.on('data', data => message += data);
 
   request.on('end', () => {
-    const url = hostedExperiments.original.params.url;
-
-    // Add more to flags without changing the original flags
     const configs = JSON.parse(message);
-    const networkRequests = hostedExperiments.original.artifacts.networkRecords.defaultPass;
-
     let blockedUrlPatterns = configs.blockedUrlPatterns || [];
-    
+
+    const networkRequests = hostedExperiments.original.artifacts.networkRecords.defaultPass;
     if (configs.blockedMimeTypes) { 
       const filterFn = request => {
         return configs.blockedMimeTypes.indexOf(request.mimeType) > -1;
@@ -116,8 +112,10 @@ function rerunRequestHandler(request, response) {
       blockedUrlPatterns.push(...networkRequests.filter(filterFn).map(request => request.url));
     }
 
+    // Add more to flags without changing the original flags
     const flags = Object.assign({}, hostedExperiments.original.params.flags, {blockedUrlPatterns});
 
+    const url = hostedExperiments.original.params.url;
     lighthouse(url, flags, perfOnlyConfig).then(results => {
       const artifacts = results.artifacts;
       results.artifacts = undefined;

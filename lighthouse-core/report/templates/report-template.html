@@ -48,9 +48,16 @@ limitations under the License.
         </span>
         <span class="rerun-section">
           <button class="report-body__icon rerun-button js-rerun-button"></button>
-          <div class="rerun-popup js-rerun-popup" status="idle">
+          <div class="rerun-popup js-rerun-popup" status="inactive">
+            <form class="rerun-form js-rerun-form">
+              Blocked URL patterns (separated by line break):<br>
+              <textarea rows="5" cols="50" name="blockedUrlPatterns" placeholder="e.g. https://*.evil.com"></textarea><br><br>
+              Blocked MIME Types (separated by line break):<br>
+              <textarea rows="5" cols="50" name="blockedMimeTypes" placeholder="e.g. image/jpg text/javascript"></textarea><br><br>
+              <input type="submit"><br>
+            </form>
             <p class="rerun-message">Rerunning Lighthouse</p>
-            <a class="rerun-report-link js-rerun-report-link" href="/?id=rerun">New Report</a>
+            <a class="rerun-report-link" href="/?id=rerun">New Report</a>
           </div>
         </span>
         <button class="report-body__icon share js-share"></button>
