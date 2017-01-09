@@ -843,7 +843,7 @@ body {
   display: none;
 }
 
-.rerun-popup[status=running] .rerun-report {
+.rerun-popup[status=running] .rerun-report-link {
   display: none;
 }
 

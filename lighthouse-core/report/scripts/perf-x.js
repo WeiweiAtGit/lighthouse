@@ -30,7 +30,6 @@ window.addEventListener('DOMContentLoaded', _ => {
   rerunButton.style.display = 'inline-block';
 
   const rerunPopup = document.querySelector('.js-rerun-popup');
-  const rerunReport = document.querySelector('.js-rerun-report');
   rerunButton.addEventListener('click', () => {
     rerunPopup.setAttribute('status', 'running');
     rerunLighthouse().then(() => {
@@ -38,7 +37,8 @@ window.addEventListener('DOMContentLoaded', _ => {
     });
   });
 
-  rerunReport.addEventListener('click', () => {
+  const rerunReportLink = document.querySelector('.js-rerun-report-link');
+  rerunReportLink.addEventListener('click', () => {
     rerunPopup.setAttribute('status', 'idle');
   });
 });
@@ -50,9 +50,8 @@ window.addEventListener('DOMContentLoaded', _ => {
  *	- config related flags (e.g. --config-path). Always use perf-olny config for rerunning.
  *
  * @param {!Object} additionalFlags
- * @return {!String} URL where new report can be accessed
+ * @return {!Promise}
  */
 function rerunLighthouse(additionalFlags={}) {
-  return fetch('/rerun', {method: 'POST', body: JSON.stringify(additionalFlags)})
-    .then(response => response.text());
+  return fetch('/rerun', {method: 'POST', body: JSON.stringify(additionalFlags)});
 }
