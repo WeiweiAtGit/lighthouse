@@ -253,14 +253,15 @@ function runLighthouse(url: string,
                          outputPath: string, interactive: boolean, saveArtifacts: boolean, saveAssets: boolean},
                        config: Object): Promise<undefined> {
 
+  let artifacts: Object;
   let chromeLauncher: ChromeLauncher;
   return initPort(flags)
     .then(() => getDebuggableChrome(flags))
     .then(chrome => chromeLauncher = chrome)
     .then(() => lighthouse(url, flags, config))
     .then((results: Results) => {
-      // delete artifacts from result so reports won't include artifacts.
-      const artifacts = results.artifacts;
+      // Separate artifacts from result so reports won't include artifacts.
+      artifacts = results.artifacts;
       results.artifacts = undefined;
       
       if (flags.saveArtifacts) {
@@ -281,7 +282,7 @@ function runLighthouse(url: string,
     })
     .then((results: Results) => {
       if (flags.interactive) {
-        return performanceXServer.hostExperiment({url, flags}, results);
+        return performanceXServer.hostExperiment({url, flags}, results, artifacts);
       }
     })
     .then(() => chromeLauncher.kill())

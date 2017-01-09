@@ -40,10 +40,11 @@ const hostedExperiments = {};
  * Start the server with an arbitrary port and open report page in the default browser.
  * @param {!Object} params A JSON contains lighthouse parameters
  * @param {!Object} results
+ * @param {!Object} artifacts
  * @return {!Promise<string>} Promise that resolves when server is closed
  */
-function hostExperiment(params, results) {
-  hostedExperiments.original = {params, results};
+function hostExperiment(params, results, artifacts) {
+  hostedExperiments.original = {params, results, artifacts};
   return new Promise(resolve => {
     const server = http.createServer(requestHandler);
     server.listen(0);
@@ -103,12 +104,24 @@ function rerunRequestHandler(request, response) {
     const url = hostedExperiments.original.params.url;
 
     // Add more to flags without changing the original flags
-    const additionalFlags = JSON.parse(message);
-    const flags = Object.assign({}, hostedExperiments.original.params.flags, additionalFlags);
+    const configs = JSON.parse(message);
+    const networkRequests = hostedExperiments.original.artifacts.networkRecords.defaultPass;
+
+    let blockedUrlPatterns = configs.blockedUrlPatterns || [];
+    
+    if (configs.blockedMimeTypes) { 
+      const filterFn = request => {
+        return configs.blockedMimeTypes.indexOf(request.mimeType) > -1;
+      };
+      blockedUrlPatterns.push(...networkRequests.filter(filterFn).map(request => request.url));
+    }
+
+    const flags = Object.assign({}, hostedExperiments.original.params.flags, {blockedUrlPatterns});
 
     lighthouse(url, flags, perfOnlyConfig).then(results => {
+      const artifacts = results.artifacts;
       results.artifacts = undefined;
-      hostedExperiments.rerun = {params: {url, flags}, results};
+      hostedExperiments.rerun = {params: {url, flags}, results, artifacts};
       response.writeHead(200, {'Content-Type': 'text/plain'});
       response.end('/?id=rerun');
     });
