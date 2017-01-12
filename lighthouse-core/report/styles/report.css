@@ -159,7 +159,7 @@ body {
   outline: none;
 }
 
-.rerun-button[data-status=running] {
+.rerun-button__spinning {
   animation: rotate 1000ms infinite;
 }
 

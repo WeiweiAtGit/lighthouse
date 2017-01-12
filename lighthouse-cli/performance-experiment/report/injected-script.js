@@ -30,11 +30,11 @@ window.addEventListener('DOMContentLoaded', _ => {
   rerunButton.style.display = 'inline-block';
 
   rerunButton.addEventListener('click', () => {
-    rerunButton.setAttribute('data-status', 'running');
-    rerunLighthouse({blockedUrlPatterns: getUrlPatternsToBlock()}).then(() => {
+    rerunButton.classList.add('rerun-button__spinning');
+    rerunLighthouse({blockedUrlPatterns: getUrlBlockingConfig()}).then(() => {
       location.reload();
     }).catch(err => {
-      rurunButton.setAttribute('data-status', 'stable');
+      rerunButton.classList.remove('rerun-button__spinning');
       console.log(err);
     });
   });
@@ -42,18 +42,13 @@ window.addEventListener('DOMContentLoaded', _ => {
   const blockToggles = document.querySelectorAll('.js-request-blocking__toggle');
   blockToggles.forEach(toggle => {
     toggle.addEventListener('click', () => {
-      const requestNode = toggle.parentNode;
-      if (requestNode.getAttribute('data-to-block') === 'true') {
-        requestNode.setAttribute('data-to-block', 'false');
-      } else {
-        requestNode.setAttribute('data-to-block', 'true');
-      }
+      toggle.parentNode.classList.toggle('request__block');
     });
   });
 });
 
-function getUrlPatternsToBlock() {
-  const requestNodes = document.querySelectorAll('.js-cnc-node[data-to-block=true]');
+function getUrlBlockingConfig() {
+  const requestNodes = document.querySelectorAll('.js-cnc-node.request__block');
   return Array.prototype.map.call(requestNodes, requestNode => {
     return requestNode.getAttribute('title');
   });
