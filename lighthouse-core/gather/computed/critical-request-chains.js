@@ -47,7 +47,7 @@ class CriticalRequestChains extends ComputedArtifact {
       return false;
     }
 
-    if (request.statusCode === 0) {
+    if (request.blockedReason() === 'inspector') {
       return true;
     }
 
@@ -72,7 +72,7 @@ class CriticalRequestChains extends ComputedArtifact {
         endTime: request.endTime,
         responseReceivedTime: request.responseReceivedTime,
         transferSize: request.transferSize,
-        blocked: request.statusCode === 0
+        blocked: request.blockedReason() === 'inspector'
       };
     };
 
