@@ -50,7 +50,7 @@ class CriticalRequestChains extends ComputedArtifact {
     if (request.statusCode === 0) {
       return true;
     }
-    
+
     return includes(['VeryHigh', 'High', 'Medium'], request.priority());
   }
 

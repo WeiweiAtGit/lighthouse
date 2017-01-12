@@ -34,7 +34,7 @@ window.addEventListener('DOMContentLoaded', _ => {
     rerunLighthouse({blockedUrlPatterns: getUrlPatternsToBlock()}).then(() => {
       location.reload();
     }).catch(err => {
-      rurunButton.setAttribute('data-status', 'stable')
+      rurunButton.setAttribute('data-status', 'stable');
       console.log(err);
     });
   });
@@ -42,16 +42,14 @@ window.addEventListener('DOMContentLoaded', _ => {
   const blockToggles = document.querySelectorAll('.js-request-blocking__toggle');
   blockToggles.forEach(toggle => {
     toggle.addEventListener('click', () => {
-      let requestNode = toggle.parentNode;
-      const childRequestNodes = requestNode.querySelectorAll('.js-cnc-node');
-
+      const requestNode = toggle.parentNode;
       if (requestNode.getAttribute('data-to-block') === 'true') {
         requestNode.setAttribute('data-to-block', 'false');
       } else {
         requestNode.setAttribute('data-to-block', 'true');
       }
     });
-  })
+  });
 });
 
 function getUrlPatternsToBlock() {
