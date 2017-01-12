@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', _ => {
 function getUrlPatternsToBlock() {
   const requestNodes = document.querySelectorAll('.js-cnc-node[data-to-block=true]');
   return Array.prototype.map.call(requestNodes, requestNode => {
-    return requestNode.getAttribute('data-request-url');
+    return requestNode.getAttribute('title');
   });
 }
 

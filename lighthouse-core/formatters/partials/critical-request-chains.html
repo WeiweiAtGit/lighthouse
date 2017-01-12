@@ -100,7 +100,7 @@ html[data-report-context=perf-x] .cnc-node__tree-marker > .tree-marker:last-chil
 </style>
 
 {{#*inline "writeNode"}}
-  <div class="cnc-node js-cnc-node" title="{{ this.node.request.url }}" data-blocked="{{ this.node.request.blocked }}" data-to-block="{{ this.node.request.blocked }}" data-request-url="{{ this.node.request.url }}">
+  <div class="cnc-node js-cnc-node" title="{{ this.node.request.url }}" data-blocked="{{ this.node.request.blocked }}" data-to-block="{{ this.node.request.blocked }}">
     <span class="cnc-node__tree-marker">
     {{#each treeMarkers as |separator| }}
       {{#separator}}
