@@ -47,6 +47,10 @@ class CriticalRequestChains extends ComputedArtifact {
       return false;
     }
 
+    if (request.statusCode === 0) {
+      return true;
+    }
+    
     return includes(['VeryHigh', 'High', 'Medium'], request.priority());
   }
 
@@ -67,7 +71,8 @@ class CriticalRequestChains extends ComputedArtifact {
         startTime: request.startTime,
         endTime: request.endTime,
         responseReceivedTime: request.responseReceivedTime,
-        transferSize: request.transferSize
+        transferSize: request.transferSize,
+        blocked: request.statusCode === 0
       };
     };
 

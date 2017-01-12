@@ -31,7 +31,7 @@ limitations under the License.
 <body>
 
 <div class="js-report report">
-  <section class="report-body js-report-body" status="stable">
+  <section class="report-body js-report-body">
     <div class="report-body__header">
       <div class="report-body__metadata">
         <div class="report-body__url">Results for: <a href="{{ url }}" target="_blank">{{ url }}</a></div>
@@ -47,7 +47,7 @@ limitations under the License.
             <a href="#" data-action="save-json">Save as JSON...</a>
           </ul>
         </span>
-        <button class="report-body__icon rerun-button js-rerun-button" title="Rerun this test"></button>
+        <button class="report-body__icon rerun-button js-rerun-button" title="Rerun this test" data-status="stable"></button>
         <button class="report-body__icon share js-share"></button>
         {{#if_not_eq reportContext "viewer"}}
           <button class="report-body__icon print js-print"></button>

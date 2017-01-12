@@ -38,13 +38,17 @@
 }
 
 .cnc-node {
-  height: 26px;
   line-height: 26px;
   white-space: nowrap;
+  display: block;
 }
 
 .cnc-node__tree-value {
   margin-left: 10px;
+}
+
+.cnc-node[data-blocked=true] .cnc-node__tree-value {
+  text-decoration: line-through;
 }
 
 .cnc-node__chain-duration {
@@ -55,10 +59,48 @@
   color: #999;
 }
 
+.request-blocking__checkbox {
+  display: none;
+}
+
+.request-blocking__toggle {
+  background-image: url('data:image/svg+xml;utf8,<svg fill="#000000" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+  display: none;
+  padding: 0 0 0 0px;
+  width: 18px;
+  height: 18px;
+  transform: translate(0px, 5px);
+  border: none;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 16px 16px;
+  background-color: transparent;
+}
+
+.cnc-node[data-to-block=true] .request-blocking__toggle {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="#000000" height="24" viewBox="0 0 24 24" width="24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/><path xmlns="http://www.w3.org/2000/svg" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+}
+
+.cnc-node[data-to-block=true] > .request-blocking__toggle {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="#000000" height="24" viewBox="0 0 24 24" width="24"><path d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/><path xmlns="http://www.w3.org/2000/svg" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="red" stroke="red"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+}
+
+/*
+ * Show checkbox in perf-x mode
+ */
+html[data-report-context=perf-x] .request-blocking__toggle {
+  display: inline-block;
+}
+
+html[data-report-context=perf-x] .cnc-node__tree-marker > .tree-marker:last-child {
+  display: none;
+}
+
 </style>
 
 {{#*inline "writeNode"}}
-  <div class="cnc-node" title="{{ this.node.request.url }}">
+  <div class="cnc-node js-cnc-node" title="{{ this.node.request.url }}" data-blocked="{{ this.node.request.blocked }}" data-to-block="{{ this.node.request.blocked }}" data-request-url="{{ this.node.request.url }}">
     <span class="cnc-node__tree-marker">
     {{#each treeMarkers as |separator| }}
       {{#separator}}
@@ -83,7 +125,7 @@
       <span class="tree-marker right"></span>
     {{/hasChildren}}
     </span>
-
+    <button class="request-blocking__toggle js-request-blocking__toggle"></button>
     <span class="cnc-node__tree-value">
       {{#parseURL this.node.request.url }}
         <span class="cnc-node__tree-file">{{ this.file }}</span>
@@ -93,13 +135,14 @@
         - <span class="cnc-node__chain-duration">{{chainDuration startTime this.node.request.endTime }}ms, {{formatTransferSize this.transferSize}}KB</span>
       {{/unless}}
     </span>
+
+    {{#each this.node.children as |child| }}
+      {{#createContextFor ../node.children @key ../treeMarkers ../isLastChild ../startTime ../transferSize }}
+        {{> writeNode this }}
+      {{/createContextFor }}
+    {{/each}}
   </div>
 
-  {{#each this.node.children as |child| }}
-    {{#createContextFor ../node.children @key ../treeMarkers ../isLastChild ../startTime ../transferSize }}
-      {{> writeNode this }}
-    {{/createContextFor }}
-  {{/each}}
 {{/inline}}
 
 <ul class="subitem__details">

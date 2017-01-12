@@ -84,7 +84,7 @@ function requestHandler(request, response) {
 }
 
 function reportRequestHandler(request, response) {
-  const html = reportGenerator.generateHTML(lhResults, 'cli');
+  const html = reportGenerator.generateHTML(lhResults, 'perf-x');
   response.writeHead(200, {'Content-Type': 'text/html'});
   response.end(html);
 }

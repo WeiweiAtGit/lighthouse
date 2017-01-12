@@ -30,17 +30,41 @@ window.addEventListener('DOMContentLoaded', _ => {
   rerunButton.style.display = 'inline-block';
 
   rerunButton.addEventListener('click', () => {
-    rerunButton.setAttribute('status', 'running');
-    rerunLighthouse().then(() => {
+    rerunButton.setAttribute('data-status', 'running');
+    rerunLighthouse({blockedUrlPatterns: getUrlPatternsToBlock()}).then(() => {
       location.reload();
+    }).catch(err => {
+      rurunButton.setAttribute('data-status', 'stable')
+      console.log(err);
     });
   });
+
+  const blockToggles = document.querySelectorAll('.js-request-blocking__toggle');
+  blockToggles.forEach(toggle => {
+    toggle.addEventListener('click', () => {
+      let requestNode = toggle.parentNode;
+      const childRequestNodes = requestNode.querySelectorAll('.js-cnc-node');
+
+      if (requestNode.getAttribute('data-to-block') === 'true') {
+        requestNode.setAttribute('data-to-block', 'false');
+      } else {
+        requestNode.setAttribute('data-to-block', 'true');
+      }
+    });
+  })
 });
+
+function getUrlPatternsToBlock() {
+  const requestNodes = document.querySelectorAll('.js-cnc-node[data-to-block=true]');
+  return Array.prototype.map.call(requestNodes, requestNode => {
+    return requestNode.getAttribute('data-request-url');
+  });
+}
 
 /**
  * Send POST request to rerun lighthouse.
  * Available additionalFlags attributes:
- *	- blockedUrlPatterns {Array<string>} Block all the URL patterns.
+ *  - blockedUrlPatterns {Array<string>} Block all the URL patterns.
  *
  * @param {!Object} additionalFlags
  * @return {!Promise} resolve when rerun is completed

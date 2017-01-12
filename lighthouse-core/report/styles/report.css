@@ -155,7 +155,11 @@ body {
   display: none;
 }
 
-.rerun-button[status=running] {
+.report-body__icon.rerun-button:focus {
+  outline: none;
+}
+
+.rerun-button[data-status=running] {
   animation: rotate 1000ms infinite;
 }
 
