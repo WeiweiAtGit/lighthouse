@@ -195,10 +195,10 @@ class ReportGenerator {
 
   /**
    * Gets the CSS for the report.
-   * @return {string}
+   * @return {Array<string>} an array of CSS
    */
   getReportCSS() {
-    return fs.readFileSync(path.join(__dirname, './styles/report.css'), 'utf8');
+    return [fs.readFileSync(path.join(__dirname, './styles/report.css'), 'utf8')];
   }
 
   /**

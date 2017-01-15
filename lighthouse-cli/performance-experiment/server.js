@@ -30,7 +30,7 @@ const http = require('http');
 const parse = require('url').parse;
 const opn = require('opn');
 const log = require('../../lighthouse-core/lib/log');
-const reportGenerator = new (require('./report/perf-x-report-generator'))();
+const ReportGenerator = require('./report/perf-x-report-generator');
 const lighthouse = require('../../lighthouse-core');
 
 
@@ -84,7 +84,7 @@ function requestHandler(request, response) {
 }
 
 function reportRequestHandler(request, response) {
-  const html = reportGenerator.generateHTML(lhResults, 'perf-x');
+  const html = new ReportGenerator().generateHTML(lhResults, 'perf-x');
   response.writeHead(200, {'Content-Type': 'text/html'});
   response.end(html);
 }

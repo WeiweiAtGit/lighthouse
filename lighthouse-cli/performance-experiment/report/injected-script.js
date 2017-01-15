@@ -25,43 +25,116 @@
  * Include functions for supporting interation between report page and Perf-X server.
  */
 
-window.addEventListener('DOMContentLoaded', _ => {
-  const rerunButton = document.querySelector('.js-rerun-button');
-  rerunButton.style.display = 'inline-block';
-
-  rerunButton.addEventListener('click', () => {
-    rerunButton.classList.add('rerun-button__spinning');
-    rerunLighthouse({blockedUrlPatterns: getUrlBlockingConfig()}).then(() => {
-      location.reload();
-    }).catch(err => {
-      rerunButton.classList.remove('rerun-button__spinning');
-      console.log(err);
-    });
-  });
+window.addEventListener('DOMContentLoaded', () => {
+  const configPanel = new ConfigPanel();
 
   const blockToggles = document.querySelectorAll('.js-request-blocking__toggle');
   blockToggles.forEach(toggle => {
+    const requestNode = toggle.parentNode;
+    const url = requestNode.getAttribute('title');
+    const unblockCallback = () => requestNode.classList.remove('request__block');
+
     toggle.addEventListener('click', () => {
-      toggle.parentNode.classList.toggle('request__block');
+      if (requestNode.classList.contains('request__block')) {
+        requestNode.classList.remove('request__block');
+        configPanel.removeBlockedUrlPattern(url);
+      } else {
+        requestNode.classList.add('request__block');
+        configPanel.addBlockedUrlPattern(url, unblockCallback);
+      }
     });
+
+    if (requestNode.classList.contains('request__block')) {
+      configPanel.addBlockedUrlPattern(url, unblockCallback);
+    }
   });
+
+  configPanel.log('');
+  configPanel.show();
 });
 
-function getUrlBlockingConfig() {
-  const requestNodes = document.querySelectorAll('.js-cnc-node.request__block');
-  return Array.prototype.map.call(requestNodes, requestNode => {
-    return requestNode.getAttribute('title');
-  });
-}
+class ConfigPanel {
+  constructor() {
+    this._configPanel = document.querySelector('.js-config-panel');
+    this._rerunButton = this._configPanel.querySelector('.js-rerun-button');
+    this._messageField = this._configPanel.querySelector('.js-message');
+    this._bodyToggle = this._configPanel.querySelector('.js-panel-toggle');
+    this._urlBlockingList = this._configPanel.querySelector('.js-url-blocking-patterns');
+    this._addButton = this._configPanel.querySelector('.js-add-button');
+    this._patternInput = this._configPanel.querySelector('.js-pattern-input');
 
-/**
- * Send POST request to rerun lighthouse.
- * Available additionalFlags attributes:
- *  - blockedUrlPatterns {Array<string>} Block all the URL patterns.
- *
- * @param {!Object} additionalFlags
- * @return {!Promise} resolve when rerun is completed
- */
-function rerunLighthouse(additionalFlags={}) {
-  return fetch('/rerun', {method: 'POST', body: JSON.stringify(additionalFlags)});
+    this._blockedUrlCallbacks = {};  // {blockedUrlPattern: calcelBlockingCallbacks}
+
+    this._rerunButton.addEventListener('click', this._rerunLighthouse.bind(this));
+    this._bodyToggle.addEventListener('click', this._toggleBody.bind(this));
+    this._addButton.addEventListener('click', () => {
+      this._patternInput.value && this.addBlockedUrlPattern(this._patternInput.value);
+      this._patternInput.value = '';
+    });
+    this._patternInput.addEventListener('keypress', event => {
+      (event.keyCode || event.which) === 13 && this._addButton.click();
+    });
+  }
+
+  /**
+   * Send POST request to rerun lighthouse.
+   */
+  _rerunLighthouse() {
+    this.log('Start Rerunning Lighthouse');
+
+    const options = {
+      blockedUrlPatterns: this.getBlockedUrlPatterns()
+    };
+
+    return fetch('/rerun', {method: 'POST', body: JSON.stringify(options)}).then(() => {
+      location.reload();
+    }).catch(err => {
+      rerunButton.classList.remove('rerun-button__spinning');
+      this.log(`Lighthouse Runtime Error: ${err}`);
+    });
+  }
+
+  addBlockedUrlPattern(urlPattern, cancelCallback) {
+    if (this._blockedUrlCallbacks[urlPattern]) {
+      this.log(`${urlPattern} is already in the list`);
+    } else {
+      const template = document.querySelector('template.url-blocking-entry');
+      const newEntry = document.importNode(template.content, true).querySelector('li');
+
+      newEntry.querySelector('div').textContent = urlPattern;
+      newEntry.querySelector('button').addEventListener('click', () => {
+        this.removeBlockedUrlPattern(urlPattern);
+      });
+
+      this._blockedUrlCallbacks[urlPattern] = [() => {
+        newEntry.parentNode.removeChild(newEntry);
+      }];
+
+      this._urlBlockingList.insertBefore(newEntry, template);
+      this.log(`Added URL Blocking Pattern: ${urlPattern}`);
+    }
+    cancelCallback && this._blockedUrlCallbacks[urlPattern].push(cancelCallback);
+  }
+
+  removeBlockedUrlPattern(urlPattern) {
+    this._blockedUrlCallbacks[urlPattern].forEach(callback => callback());
+    this._blockedUrlCallbacks[urlPattern] = undefined;
+    this.log(`Removed URL Blocking Pattern: ${urlPattern}`);
+  }
+
+  getBlockedUrlPatterns() {
+    return Object.keys(this._blockedUrlCallbacks).filter(key => this._blockedUrlCallbacks[key]);
+  }
+
+  log(message) {
+    this._messageField.innerHTML = message;
+  }
+
+  show() {
+    this._configPanel.style.display = 'block';
+  }
+
+  _toggleBody() {
+    this._configPanel.classList.toggle('expanded');
+  }
 }

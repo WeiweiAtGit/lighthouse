@@ -23,6 +23,12 @@ const path = require('path');
 const ReportGenerator = require('../../../lighthouse-core/report/report-generator');
 
 class PerfXReportGenerator extends ReportGenerator {
+  // getReportCSS() {
+  //   const cssArr = super.getReportCSS();
+  //   cssArr.push(fs.readFileSync(path.join(__dirname, './injected-style.css'), 'utf8'));
+  //   return cssArr;
+  // }
+
   getReportJS(reportContext) {
     const scriptArr = super.getReportJS(reportContext);
     scriptArr.push(fs.readFileSync(path.join(__dirname, './injected-script.js'), 'utf8'));
