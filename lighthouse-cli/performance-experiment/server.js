@@ -87,17 +87,18 @@ function reportRequestHandler(request, response) {
   try {
     const id = request.parsedUrl.query.id || 0;
     const [params, results] = database.getData(id);
-    results.previousReports = [];
-    results.followingReports = [];
-    database.timeStamps.forEach((generatedTime, index) => {
-      const report = {url:`/?id=${index}`, generatedTime};
-      if (index < id) {
-        results.previousReports.push(report);
-      } else if (index > id) {
-        results.followingReports.push(report);
-      }
+
+    results.relatedReports = database.timeStamps.map((generatedTime, index) => {
+      return {reportUrl:`/?id=${index}`, url: database.url, generatedTime};
     });
+<<<<<<< HEAD
     const html = (new PerfXReportGenerator()).generateHTML(results, 'perf-x');
+=======
+
+    const reportGenerator = new ReportGenerator();
+    const html = reportGenerator.generateHTML(results, 'cli');
+
+>>>>>>> improved UI
     response.writeHead(200, {'Content-Type': 'text/html'});
     response.end(html);
   } catch (err) {

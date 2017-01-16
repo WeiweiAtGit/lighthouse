@@ -38,10 +38,18 @@ limitations under the License.
             <h1 class="menu__header-title">Lighthouse</h1>
             <div class="menu__header-version">Version: {{lighthouseVersion}}</div>
           </div>
-          {{#each previousReports}}
-            <a class="menu__report-link" href="{{ this.url }}">{{ this.generatedTime }}</a>
+          {{#each relatedReports}}
+            {{#if_less_than generatedTime ../generatedTime }}
+              <a class="menu__report-tab" href="{{ reportUrl }}">
+                <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+                <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+              </a>
+            {{/if_less_than}}
           {{/each}}
-          <a class="menu__report-link">{{generatedTime}}</a>
+          <a class="menu__report-tab" href="#">
+            <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+            <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+          </a>
           <ul class="menu__nav">
             {{#each aggregations}}
             <li class="menu__nav-item">
@@ -51,8 +59,13 @@ limitations under the License.
             </li>
             {{/each}}
           </ul>
-          {{#each followingReports}}
-            <a class="menu__report-link" href="{{ this.url }}">{{ this.generatedTime }}</a>
+          {{#each relatedReports}}
+            {{#if_less_than ../generatedTime generatedTime }}
+              <a class="menu__report-tab" href="{{ reportUrl }}">
+                <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+                <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+              </a>
+            {{/if_less_than}}
           {{/each}}
         </div>
       </div>
