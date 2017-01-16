@@ -86,10 +86,10 @@ function requestHandler(request, response) {
 function reportRequestHandler(request, response) {
   try {
     const id = request.parsedUrl.query.id || 0;
-    const [params, results] = database.getData(id);
+    const results = database.getResults(id);
 
     results.relatedReports = database.timeStamps.map((generatedTime, index) => {
-      return {reportUrl:`/?id=${index}`, url: database.url, generatedTime};
+      return {reportUrl: `/?id=${index}`, url: database.url, generatedTime};
     });
 <<<<<<< HEAD
     const html = (new PerfXReportGenerator()).generateHTML(results, 'perf-x');
@@ -114,7 +114,7 @@ function blockedUrlPatternsRequestHandler(request, response) {
 
 function rerunRequestHandler(request, response) {
   try {
-    const [flags, results] = database.getData(request.parsedUrl.query.id || 0);
+    const flags = database.getFlags(request.parsedUrl.query.id || 0).flags;
     let message = '';
     request.on('data', data => message += data);
 
@@ -130,11 +130,19 @@ function rerunRequestHandler(request, response) {
       });
     });
   } catch (err) {
-    response.writeHead(404);
-    response.end('404: Resource Not Found');
+    if (err.code === 'MODULE_NOT_FOUND') {
+      response.writeHead(404);
+      response.end('404: Resource Not Found');
+    } else {
+      throw err;
+    }
   }
 }
 
+/**
+ *  Store all the experiment data (flags and results) on hard disk.
+ *  Call this.clear() to delete all the temp files.
+ */
 class ExperimentDatabase {
   constructor(url, config) {
     this._url = url;
@@ -144,9 +152,17 @@ class ExperimentDatabase {
     this._timeStamps = [];
   }
 
-  get url() {return this._url;}
-  get config() {return this._config;}
-  get timeStamps() {return this._timeStamps;}
+  get url() {
+    return this._url;
+  }
+
+  get config() {
+    return this._config;
+  }
+
+  get timeStamps() {
+    return this._timeStamps;
+  }
 
   saveData(lhFlags, lhResults) {
     const id = this._timeStamps.length;
@@ -156,13 +172,16 @@ class ExperimentDatabase {
     return id;
   }
 
-  getData(id) {
-    const flags = require(`${this._root}/flags-${id}.json`);
-    const results = require(`${this._root}/results-${id}.json`);
-    return [flags, results];
+  getFlags(id) {
+    return require(`${this._root}/flags-${id}.json`);
+  }
+
+  getResults(id) {
+    return require(`${this._root}/results-${id}.json`);
   }
 
   clear() {
+    this._timeStamps = [];
     fs.readdirSync(this._root).forEach(filename => fs.unlinkSync(`${this._root}/${filename}`));
     fs.rmdirSync(this._root);
   }

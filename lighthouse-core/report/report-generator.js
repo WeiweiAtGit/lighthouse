@@ -114,8 +114,10 @@ class ReportGenerator {
     // value < value2?
     Handlebars.registerHelper('if_less_than', function(lhs, rhs, opts) {
       if (lhs < rhs) {
+        // eslint-disable-next-line no-invalid-this
         return opts.fn(this);
       } else {
+        // eslint-disable-next-line no-invalid-this
         return opts.inverse(this);
       }
     });
@@ -168,7 +170,6 @@ class ReportGenerator {
       // handlebars renders the text as HTML.
       return new Handlebars.SafeString(str);
     });
-
 
     // format time
     Handlebars.registerHelper('format_time', function(date) {
