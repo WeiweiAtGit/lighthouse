@@ -323,6 +323,12 @@ class ReportGenerator {
       });
     });
 
+    const formatReportTime = report => {
+      return Object.assign({}, report, {generatedTime: this._formatTime(report.generatedTime)});
+    };
+    const previousReports = (results.previousReports || []).map(formatReportTime);
+    const followingReports = (results.followingReports || []).map(formatReportTime);
+
     const template = Handlebars.compile(this.getReportTemplate());
 
     return template({
@@ -335,7 +341,9 @@ class ReportGenerator {
       scripts: this.getReportJS(reportContext),
       aggregations: results.aggregations,
       auditsByCategory: this._createPWAAuditsByCategory(results.aggregations),
-      runtimeConfig: results.runtimeConfig
+      runtimeConfig: results.runtimeConfig,
+      previousReports: previousReports,
+      followingReports: followingReports,
     });
   }
 }

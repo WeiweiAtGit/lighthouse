@@ -28,40 +28,38 @@
 
 const http = require('http');
 const parse = require('url').parse;
+const fs = require('fs');
 const opn = require('opn');
 const log = require('../../lighthouse-core/lib/log');
 const PerfXReportGenerator = require('./report/perf-x-report-generator');
 const lighthouse = require('../../lighthouse-core');
 
-
+let database;
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
  * @param {!Object} params A JSON contains lighthouse parameters
  * @param {!Object} results
  * @return {!Promise<string>} Promise that resolves when server is closed
  */
-let lhResults;
-let lhParams;
 function hostExperiment(params, results) {
-  lhResults = results;
-  lhParams = params;
-
   return new Promise(resolve => {
+    database = new ExperimentDatabase(params.url, params.config);
+    const id = database.saveData(params, results);
     const server = http.createServer(requestHandler);
     server.listen(0);
-    server.on('listening', () => {
-      opn(`http://localhost:${server.address().port}/`);
-    });
+    server.on('listening', () => opn(`http://localhost:${server.address().port}/?id=${id}`));
     server.on('error', err => log.error('PerformanceXServer', err.code, err));
     server.on('close', resolve);
     process.on('SIGINT', () => {
+      database.clear();
       server.close();
     });
   });
 }
 
 function requestHandler(request, response) {
-  const pathname = parse(request.url).pathname;
+  request.parsedUrl = parse(request.url, true);
+  const pathname = request.parsedUrl.pathname;
 
   if (request.method === 'GET') {
     if (pathname === '/') {
@@ -86,9 +84,26 @@ function requestHandler(request, response) {
 }
 
 function reportRequestHandler(request, response) {
-  const html = new PerfXReportGenerator().generateHTML(lhResults, 'perf-x');
-  response.writeHead(200, {'Content-Type': 'text/html'});
-  response.end(html);
+  try {
+    const id = request.parsedUrl.query.id || 0;
+    const [params, results] = database.getData(id);
+    results.previousReports = [];
+    results.followingReports = [];
+    database.timeStamps.forEach((generatedTime, index) => {
+      const report = {url:`/?id=${index}`, generatedTime};
+      if (index < id) {
+        results.previousReports.push(report);
+      } else if (index > id) {
+        results.followingReports.push(report);
+      }
+    });
+    const html = (new PerfXReportGenerator()).generateHTML(results, 'perf-x');
+    response.writeHead(200, {'Content-Type': 'text/html'});
+    response.end(html);
+  } catch (err) {
+    response.writeHead(404);
+    response.end('404: Resource Not Found');
+  }
 }
 
 function blockedUrlPatternsRequestHandler(request, response) {
@@ -97,20 +112,59 @@ function blockedUrlPatternsRequestHandler(request, response) {
 }
 
 function rerunRequestHandler(request, response) {
-  let message = '';
-  request.on('data', data => message += data);
+  try {
+    const [flags, results] = database.getData(request.parsedUrl.query.id || 0);
+    let message = '';
+    request.on('data', data => message += data);
 
-  request.on('end', () => {
-    const additionalFlags = JSON.parse(message);
-    const flags = Object.assign(lhParams.flags, additionalFlags);
+    request.on('end', () => {
+      const additionalFlags = JSON.parse(message);
+      Object.assign(flags, additionalFlags);
 
-    lighthouse(lhParams.url, flags, lhParams.config).then(results => {
-      results.artifacts = undefined;
-      lhResults = results;
-      response.writeHead(200);
-      response.end();
+      lighthouse(database.url, flags, database.config).then(results => {
+        results.artifacts = undefined;
+        const id = database.saveData(flags, results);
+        response.writeHead(200);
+        response.end(`/?id=${id}`);
+      });
     });
-  });
+  } catch (err) {
+    response.writeHead(404);
+    response.end('404: Resource Not Found');
+  }
+}
+
+class ExperimentDatabase {
+  constructor(url, config) {
+    this._url = url;
+    this._config = config;
+
+    this._root = fs.mkdtempSync(`${__dirname}/experiment-data`);
+    this._timeStamps = [];
+  }
+
+  get url() {return this._url;}
+  get config() {return this._config;}
+  get timeStamps() {return this._timeStamps;}
+
+  saveData(lhFlags, lhResults) {
+    const id = this._timeStamps.length;
+    this._timeStamps.push(lhResults.generatedTime);
+    fs.writeFileSync(`${this._root}/flags-${id}.json`, JSON.stringify(lhFlags));
+    fs.writeFileSync(`${this._root}/results-${id}.json`, JSON.stringify(lhResults));
+    return id;
+  }
+
+  getData(id) {
+    const flags = require(`${this._root}/flags-${id}.json`);
+    const results = require(`${this._root}/results-${id}.json`);
+    return [flags, results];
+  }
+
+  clear() {
+    fs.readdirSync(this._root).forEach(filename => fs.unlinkSync(`${this._root}/${filename}`));
+    fs.rmdirSync(this._root);
+  }
 }
 
 module.exports = {

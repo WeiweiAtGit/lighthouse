@@ -94,19 +94,20 @@ class ConfigPanel {
 
   /**
    * Send POST request to rerun lighthouse with additional flags.
+   * @return {!Promise} resolve when rerun is completed.
    */
   _rerunLighthouse() {
     this.log('Start Rerunning Lighthouse');
 
+    const id = window.location.href.match(/&|\?id=(\d+)/)[1] || 0;
     const options = {
       blockedUrlPatterns: this.getBlockedUrlPatterns()
     };
 
-    return fetch('/rerun', {method: 'POST', body: JSON.stringify(options)}).then(() => {
-      location.reload();
-    }).catch(err => {
-      this.log(`Lighthouse Runtime Error: ${err}`);
-    });
+    return fetch(`/rerun?id=${id}`, {method: 'POST', body: JSON.stringify(options)})
+      .then(response => response.text())
+      .then(newReportUrl => location.assign(newReportUrl))
+      .catch(err => this.log(`Lighthouse Runtime Error: ${err}`));
   }
 
   /**
