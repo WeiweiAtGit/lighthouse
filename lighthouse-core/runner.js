@@ -133,6 +133,15 @@ class Runner {
             a => Aggregate.aggregate(a, runResults.auditResults));
         }
 
+        const runtimeConfig = {
+          environment: [
+            {name: 'CPU Throttling Disabled', value: !!opts.flags.disableCpuThrottling},
+            {name: 'Network Throttling Disabled', value: !!opts.flags.disableNetworkThrottling},
+            {name: 'Device Emulation Disabled', value: !!opts.flags.disableDeviceEmulation}
+          ],
+          blockedUrlPatterns: opts.flags.blockedUrlPatterns || []
+        };
+
         return {
           lighthouseVersion: require('../package').version,
           generatedTime: (new Date()).toJSON(),
@@ -141,7 +150,7 @@ class Runner {
           audits: formattedAudits,
           artifacts: runResults.artifacts,
           aggregations,
-          opts
+          runtimeConfig
         };
       });
 
