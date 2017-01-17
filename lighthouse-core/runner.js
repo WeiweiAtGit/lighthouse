@@ -140,7 +140,8 @@ class Runner {
           url: opts.url,
           audits: formattedAudits,
           artifacts: runResults.artifacts,
-          aggregations
+          aggregations,
+          opts
         };
       });
 

@@ -69,6 +69,9 @@ limitations under the License.
               </a>
             </li>
             {{/each}}
+            <li class="menu__nav-item">
+              <a class="menu__link" href="#runtime-configuration">Runtime Configuration</a>
+            </li>
           </ul>
         </div>
       </div>
@@ -169,6 +172,43 @@ limitations under the License.
         </div>
       </section>
       {{/each}}
+      <section class="js-breakdown aggregations" id="runtime-configuration">
+        <header class="aggregations__header">
+          <h1>Runtime Configuration</h1>
+        </header>
+        <section class="aggregation">
+          <header class="aggregation__header">
+            <h2>Runtime Environment</h2>
+          </header>
+          <ul class="subitems">
+            {{#each runtimeConfig.environment }}
+            <li class="subitem runtime-env">
+              <p class="subitem__desc">{{ this.name }}</p>
+              <div class="subitem-result">
+                <div class="runtime-config__icon {{#if this.value }}check{{else}}cross{{/if}}"></div>
+              </div>
+            </li>
+            {{/each}}
+          </ul>
+        </section>
+        {{#if runtimeConfig.blockedUrlPatterns }}
+        <section class="aggregation">
+          <header class="aggregation__header">
+            <h2>Blocked URL Patterns</h2>
+          </header>
+          <ul class="subitems">
+            {{#each runtimeConfig.blockedUrlPatterns }}
+            <li class="subitem">
+              <p class="subitem__desc">{{ this }}</p>
+              <div class="subitem-result">
+                <div class="runtime-config__icon dot"></div>
+              </div>
+            </li>
+            {{/each}}
+          </ul>
+        </section>
+        {{/if}}
+      </section>
       </div>
     </div>
 

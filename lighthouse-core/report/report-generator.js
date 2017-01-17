@@ -318,6 +318,13 @@ class ReportGenerator {
       });
     });
 
+    const flags = results.opts.flags;
+    const environment = [
+      {name: 'Device Emulation Disabled', value: flags.disableDeviceEmulation === true},
+      {name: 'CPU Throttling Disabled', value: flags.disableCpuThrottling === true},
+      {name: 'Network Throttling Disabled', value: flags.disableNetworkThrottling === true}
+    ];
+
     const template = Handlebars.compile(this.getReportTemplate());
 
     return template({
@@ -329,7 +336,8 @@ class ReportGenerator {
       reportContext: reportContext,
       scripts: this.getReportJS(reportContext),
       aggregations: results.aggregations,
-      auditsByCategory: this._createPWAAuditsByCategory(results.aggregations)
+      auditsByCategory: this._createPWAAuditsByCategory(results.aggregations),
+      runtimeConfig: {environment, blockedUrlPatterns: flags.blockedUrlPatterns}
     });
   }
 }
