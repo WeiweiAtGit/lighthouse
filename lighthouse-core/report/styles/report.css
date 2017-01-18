@@ -854,19 +854,6 @@ body {
   outline: 0;
 }
 
-.report-body__icon {
-  width: 24px;
-  height: 24px;
-  border: none;
-  cursor: pointer;
-  flex: 0 0 auto;
-  background-repeat: no-repeat;
-  background-position: center center;
-  background-size: contain;
-  background-color: transparent;
-  margin-left: 8px;
-}
-
 .runtime-config__icon {
   width: 18px;
   height: 18px;

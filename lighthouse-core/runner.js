@@ -135,9 +135,9 @@ class Runner {
 
         const runtimeConfig = {
           environment: [
-            {name: 'CPU Throttling Disabled', value: !!opts.flags.disableCpuThrottling},
-            {name: 'Network Throttling Disabled', value: !!opts.flags.disableNetworkThrottling},
-            {name: 'Device Emulation Disabled', value: !!opts.flags.disableDeviceEmulation}
+            {name: 'CPU Throttling', value: !opts.flags.disableCpuThrottling},
+            {name: 'Network Throttling', value: !opts.flags.disableNetworkThrottling},
+            {name: 'Device Emulation', value: !opts.flags.disableDeviceEmulation}
           ],
           blockedUrlPatterns: opts.flags.blockedUrlPatterns || []
         };
