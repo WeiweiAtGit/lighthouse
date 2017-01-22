@@ -129,6 +129,7 @@ Example: --output-path=./lighthouse-results.html`
 
     return true;
   })
+  .array('blocked-url-patterns')
   .argv;
 
 // Process terminating command
@@ -262,7 +263,7 @@ function runLighthouse(url: string,
       // delete artifacts from result so reports won't include artifacts.
       const artifacts = results.artifacts;
       results.artifacts = undefined;
-      
+
       if (flags.saveArtifacts) {
         assetSaver.saveArtifacts(artifacts);
       }
