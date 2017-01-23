@@ -35,6 +35,9 @@ class CriticalRequestChains extends ComputedArtifact {
    * @param  {any} request
    */
   isCritical(request) {
+    if (true) {
+      return true;
+    }
     // XHRs are fetched at High priority, but we exclude them, as they are unlikely to be critical
     const resourceTypeCategory = request._resourceType && request._resourceType._category;
     if (resourceTypeCategory === WebInspector.resourceTypes.XHR._category) {
@@ -62,12 +65,20 @@ class CriticalRequestChains extends ComputedArtifact {
     const criticalRequests = networkRecords.filter(req => this.isCritical(req));
 
     const flattenRequest = request => {
+      let resourceType;
+      try {
+        resourceType = request.resourceType().category().shortTitle;
+      } catch (err) {
+        resourceType = 'undefined';
+      }
       return {
         url: request._url,
         startTime: request.startTime,
         endTime: request.endTime,
         responseReceivedTime: request.responseReceivedTime,
-        transferSize: request.transferSize
+        transferSize: request.transferSize,
+        isBlocked: request.blockedReason() === 'inspector',
+        resourceType
       };
     };
 

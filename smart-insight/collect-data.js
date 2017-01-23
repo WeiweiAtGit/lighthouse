@@ -1,49 +1,37 @@
 'use strict';
 
+/*
+ *  Added --blocked-url-patterns as an array flag to lighthouse-cli/bin.ts
+ *  Modified lighthouse-core/gather/computed/critical-request-chains.js to treat every request as
+ *  critical request
+ */
+
 const exec = require('child_process').exec;
 const fs = require('fs');
 const path = require('path');
 
-const websites = [
-  {url: 'http://localhost:8887/', blockedUrlPatterns: ['*cat.jpg', '*cat2.jpg']}
-];
-
-function testWebsite(url, blockedUrlPatterns) {
-  // eslint-disable-next-line max-len
-  const cmd = `node lighthouse-cli ${url} --quiet --output json --perf --blocked-url-patterns ${blockedUrlPatterns.join(' ')}`;
+function runLighthouse(url, blockedUrlPatterns) {
+  let cmd = `node lighthouse-cli ${url} --quiet --output json --perf`;
+  if (blockedUrlPatterns && blockedUrlPatterns.length >= 1) {
+    // to deal with a bug where yargs does not convert parameters to an array when the array is of
+    // length 1 and the flag is accessed via camel case attribute name (#768)
+    if (blockedUrlPatterns.length === 1) {
+      blockedUrlPatterns.push('to-make-it-become-a-list');
+    }
+    cmd += ` --blocked-url-patterns ${blockedUrlPatterns.join(' ')}`;
+  }
   console.log(cmd);
 
   return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
+    exec(cmd, {maxBuffer: 16 * 1024 * 1024}, (error, stdout, stderr) => {
       if (error) {
         reject(error);
         return;
       }
       stderr && console.error(stderr);
-      resolve(JSON.stringify(stdout));
+      resolve(JSON.parse(stdout));
     });
   });
-}
-
-function experiment(url, blockedUrlPatterns, repeat) {
-  let run = Promise.resolve();
-  const dirName = path.join(__dirname, url.substr(0, min(url.length, 20)));
-  fs.mkdirSync(dirName);
-  const blockedData = [];
-  const nonBlockedData = [];
-  for (let num = 0; num < repeat; ++num) {
-    run = run
-      .then(() => testWebsite(url))
-      .then(lhResults => {
-        nonBlockedData.push(getSimplifiedResults(lhResults));
-      })
-      .then(() => testWebsite(url, ['n', ...blockedUrlPatterns]))
-      .then(lhResults => {
-        blockedData.push(getSimplifiedResults(lhResults));
-      });
-  }
-  return run
-    .then();
 }
 
 function getSimplifiedResults(lhResults) {
@@ -55,7 +43,96 @@ function getSimplifiedResults(lhResults) {
   };
 }
 
-let run = Promise.resolve();
-for (const {url, blockedUrlPatterns} of websites) {
-  run = run.then(() => experiment(url, blockedUrlPatterns, 5));
+function processRawData(rawData) {
+  const initValue = {
+    'first-meaningful-paint': 0,
+    'speed-index-metric': 0,
+    'time-to-interactive': 0
+  };
+
+  function getAvg(dataSet) {
+    const sumObj = Object.assign({}, initValue);
+    dataSet.forEach(data => {
+      Object.keys(sumObj).forEach(key => {
+        sumObj[key] += data[key];
+      });
+    });
+    Object.keys(sumObj).forEach(key => {
+      sumObj[key] /= dataSet.length;
+    });
+    return sumObj;
+  }
+
+  const avgBeforeBlocking = getAvg(rawData.perfDataBeforeBlocking);
+  const avgAfterBlocking = getAvg(rawData.perfDataAfterBlocking);
+
+  const diff = Object.assign({}, initValue);
+  Object.keys(diff).forEach(key => {
+    const absDiff = avgAfterBlocking[key] - avgBeforeBlocking[key];
+    diff[key] = {
+      'abs-diff': absDiff,
+      'rel-diff': absDiff / avgBeforeBlocking[key]
+    };
+  });
+
+  return {avgBeforeBlocking, avgAfterBlocking, diff};
 }
+
+function executeExperiment({url, blockedUrlPatterns, repeatTime, blockedType}) {
+  let run = Promise.resolve();
+  const perfDataBeforeBlocking = [];
+  const perfDataAfterBlocking = [];
+  for (let num = 0; num < repeatTime; ++num) {
+    run = run
+      .then(() => runLighthouse(url, blockedUrlPatterns))
+      .then(lhResults => {
+        const requestChains = lhResults.audits['critical-request-chains'].extendedInfo.value;
+        if (blockedType) {
+          const failedToBlocked = getResourcesOfType(requestChains, blockedType);
+          if (!(failedToBlocked.length === 0)) {
+            throw failedToBlocked;
+          }
+        }
+        perfDataAfterBlocking.push(getSimplifiedResults(lhResults));
+      })
+      .then(() => runLighthouse(url))
+      .then(lhResults => {
+        perfDataBeforeBlocking.push(getSimplifiedResults(lhResults));
+      });
+  }
+  return run
+    .then(() => ({perfDataBeforeBlocking, perfDataAfterBlocking}));
+}
+
+function getResourcesOfType(requestTree, type) {
+  const resources = [];
+  for (const key of Object.keys(requestTree)) {
+    const request = requestTree[key].request;
+    if (request.resourceType === type) {
+      resources.push(request);
+    }
+    resources.push(...getResourcesOfType(requestTree[key].children, type));
+  }
+  return resources;
+}
+
+const config = {
+  'name': 'Racing.com',
+  'catagory': 'block-fonts',
+  'url': 'https://www.racing.com/',
+  'blockedUrlPatterns': ['*.woff', '*.ttf'],
+  'blockedType': 'Font',
+  'repeatTime': 10
+};
+
+const catagoryDirName = path.join(__dirname, 'data', config.catagory);
+fs.existsSync(catagoryDirName) || fs.mkdirSync(catagoryDirName);
+
+executeExperiment(config)
+  .then(rawData => {
+    const summary = processRawData(rawData);
+    const results = {rawData, summary};
+    fs.writeFileSync(path.join(catagoryDirName, `${config.name}.json`),
+                     JSON.stringify(Object.assign(results, {config}), null, '\t'));
+  })
+  .catch(err => console.log(err));
