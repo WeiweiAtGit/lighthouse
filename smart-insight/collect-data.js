@@ -14,7 +14,7 @@ function runLighthouse(url, blockedUrlPatterns) {
   let cmd = `node lighthouse-cli ${url} --quiet --output json --perf`;
   if (blockedUrlPatterns && blockedUrlPatterns.length >= 1) {
     // to deal with a bug where yargs does not convert parameters to an array when the array is of
-    // length 1 and the flag is accessed via camel case attribute name (#768)
+    // length 1 and the flag is accessed via camel case attribute name (issue #768)
     if (blockedUrlPatterns.length === 1) {
       blockedUrlPatterns.push('to-make-it-become-a-list');
     }
