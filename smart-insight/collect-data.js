@@ -9,6 +9,8 @@
 const exec = require('child_process').exec;
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
+const urlParse = require('url').parse;
 
 function runLighthouse(url, blockedUrlPatterns) {
   let cmd = `node lighthouse-cli ${url} --quiet --output json --perf`;
@@ -78,7 +80,7 @@ function processRawData(rawData) {
   return {avgBeforeBlocking, avgAfterBlocking, diff};
 }
 
-function executeExperiment({url, blockedUrlPatterns, repeatTime, blockedType}) {
+function executeExperiment({url, blockedUrlPatterns, repeatTime}) {
   let run = Promise.resolve();
   const perfDataBeforeBlocking = [];
   const perfDataAfterBlocking = [];
@@ -86,13 +88,6 @@ function executeExperiment({url, blockedUrlPatterns, repeatTime, blockedType}) {
     run = run
       .then(() => runLighthouse(url, blockedUrlPatterns))
       .then(lhResults => {
-        const requestChains = lhResults.audits['critical-request-chains'].extendedInfo.value;
-        if (blockedType) {
-          const failedToBlocked = getResourcesOfType(requestChains, blockedType);
-          if (!(failedToBlocked.length === 0)) {
-            throw failedToBlocked;
-          }
-        }
         perfDataAfterBlocking.push(getSimplifiedResults(lhResults));
       })
       .then(() => runLighthouse(url))
@@ -104,6 +99,7 @@ function executeExperiment({url, blockedUrlPatterns, repeatTime, blockedType}) {
     .then(() => ({perfDataBeforeBlocking, perfDataAfterBlocking}));
 }
 
+// eslint-disable-next-line no-unused-vars
 function getResourcesOfType(requestTree, type) {
   const resources = [];
   for (const key of Object.keys(requestTree)) {
@@ -117,22 +113,33 @@ function getResourcesOfType(requestTree, type) {
 }
 
 const config = {
-  'name': 'Racing.com',
   'catagory': 'block-fonts',
-  'url': 'https://www.racing.com/',
-  'blockedUrlPatterns': ['*.woff', '*.ttf'],
-  'blockedType': 'Font',
+  // eslint-disable-next-line max-len
+  'blockedUrlPatterns': fs.readFileSync(path.join(__dirname, 'blocked-url-patterns/font-urls.txt'), 'utf8').split('\n').filter(line => !line.startsWith('! ')),
   'repeatTime': 10
 };
 
 const catagoryDirName = path.join(__dirname, 'data', config.catagory);
 fs.existsSync(catagoryDirName) || fs.mkdirSync(catagoryDirName);
 
-executeExperiment(config)
-  .then(rawData => {
-    const summary = processRawData(rawData);
-    const results = {rawData, summary};
-    fs.writeFileSync(path.join(catagoryDirName, `${config.name}.json`),
-                     JSON.stringify(Object.assign(results, {config}), null, '\t'));
-  })
-  .catch(err => console.log(err));
+const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+
+let run = Promise.resolve();
+rl.write('Enter URLs. Separate by \\n. Enter stop to stop:\n');
+rl.on('line', url => {
+  if (url === 'stop') {
+    run.then(() => console.log('complete'));
+    rl.close();
+    return;
+  }
+  const name = urlParse(url).hostname;
+  run = run
+    .then(() => executeExperiment(Object.assign({name, url}, config)))
+    .then(rawData => {
+      const summary = processRawData(rawData);
+      const results = {rawData, summary};
+      fs.writeFileSync(path.join(catagoryDirName, `${name}.json`),
+                       JSON.stringify(Object.assign(results, {config}), null, '\t'));
+    })
+    .catch(err => console.log(err));
+});
