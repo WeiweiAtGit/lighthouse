@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 'use strict';
 
 /*
@@ -53,16 +55,27 @@ function processRawData(rawData) {
   };
 
   function getAvg(dataSet) {
-    const sumObj = Object.assign({}, initValue);
-    dataSet.forEach(data => {
-      Object.keys(sumObj).forEach(key => {
-        sumObj[key] += data[key];
+    const results = Object.assign({}, initValue);
+
+    Object.keys(initValue).forEach(key => {
+      let count = 0;
+      let sum = 0;
+      dataSet.forEach(data => {
+        if (data[key] >= 0) {
+          sum += data[key];
+          ++count;
+        }
       });
+
+      let avg;
+      if (count > 0) {
+        avg = sum / count;
+      } else {
+        avg = -1;
+      }
+      results[key] = avg;
     });
-    Object.keys(sumObj).forEach(key => {
-      sumObj[key] /= dataSet.length;
-    });
-    return sumObj;
+    return results;
   }
 
   const avgBeforeBlocking = getAvg(rawData.perfDataBeforeBlocking);
@@ -84,19 +97,28 @@ function executeExperiment({url, blockedUrlPatterns, repeatTime}) {
   let run = Promise.resolve();
   const perfDataBeforeBlocking = [];
   const perfDataAfterBlocking = [];
+  const screenshotsBeforeBlocking = [];
+  const screenshotsAfterBlocking = [];
   for (let num = 0; num < repeatTime; ++num) {
     run = run
       .then(() => runLighthouse(url, blockedUrlPatterns))
       .then(lhResults => {
         perfDataAfterBlocking.push(getSimplifiedResults(lhResults));
+        screenshotsAfterBlocking.push(lhResults.audits.screenshots.extendedInfo.value);
       })
       .then(() => runLighthouse(url))
       .then(lhResults => {
         perfDataBeforeBlocking.push(getSimplifiedResults(lhResults));
+        screenshotsBeforeBlocking.push(lhResults.audits.screenshots.extendedInfo.value);
       });
   }
   return run
-    .then(() => ({perfDataBeforeBlocking, perfDataAfterBlocking}));
+    .then(() => ({
+      perfDataBeforeBlocking,
+      perfDataAfterBlocking,
+      screenshotsBeforeBlocking,
+      screenshotsAfterBlocking
+    }));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -112,14 +134,14 @@ function getResourcesOfType(requestTree, type) {
   return resources;
 }
 
-const config = {
+const configuration = {
   'catagory': 'block-fonts',
   // eslint-disable-next-line max-len
   'blockedUrlPatterns': fs.readFileSync(path.join(__dirname, 'blocked-url-patterns/font-urls.txt'), 'utf8').split('\n').filter(line => !line.startsWith('! ')),
   'repeatTime': 10
 };
 
-const catagoryDirName = path.join(__dirname, 'data', config.catagory);
+const catagoryDirName = path.join(__dirname, 'data', configuration.catagory);
 fs.existsSync(catagoryDirName) || fs.mkdirSync(catagoryDirName);
 
 const rl = readline.createInterface({input: process.stdin, output: process.stdout});
@@ -134,12 +156,19 @@ rl.on('line', url => {
   }
   const name = urlParse(url).hostname;
   run = run
-    .then(() => executeExperiment(Object.assign({name, url}, config)))
+    .then(() => executeExperiment(Object.assign({name, url}, configuration)))
     .then(rawData => {
+      const config = Object.assign({url}, configuration);
+      const screenshotsBefore = rawData.screenshotsBeforeBlocking;
+      const scrrenshotsAfter = rawData.scrrenshotsAfterBlocking;
+      fs.writeFileSync(path.join(catagoryDirName, `${name}-screenshots.json`),
+                       JSON.stringify({screenshotsBefore, scrrenshotsAfter, config}, null, '\t'));
+
+      rawData.screenshotsBeforeBlocking = undefined;
+      rawData.scrrenshotsAfterBlocking = undefined;
       const summary = processRawData(rawData);
-      const results = {rawData, summary};
-      fs.writeFileSync(path.join(catagoryDirName, `${name}.json`),
-                       JSON.stringify(Object.assign(results, {config}), null, '\t'));
+      fs.writeFileSync(path.join(catagoryDirName, `${name}-results.json`),
+                       JSON.stringify({rawData, summary, config}, null, '\t'));
     })
     .catch(err => console.log(err));
 });
