@@ -21,9 +21,11 @@
  *
  * Functionality:
  *    Host experiment.
- *    Report can be access via URL http://localhost:[PORT]/
- *    Rerun data can be access via URL http://localhost:[PORT]/rerun.
- *      This will rerun lighthouse with same parameters and rerun results in JSON format
+ *    Report can be access via URL: /?id=[REPORT_ID]
+ *    Browser can request lighthousr rerun by sending POST request to URL: /rerun?id=[REPORT_ID]
+ *      This will rerun lighthouse with additional cli-flags received from POST request data and
+ *      return the new report id
+ *    Flags can be access via URL: /flags?id=[REPORT_ID]
  */
 
 const http = require('http');
@@ -44,6 +46,8 @@ function hostExperiment(params, results) {
   return new Promise(resolve => {
     database = new ExperimentDatabase(params.url, params.config);
     const id = database.saveData(params.flags, results);
+    database.setDefaultId(id);
+
     const server = http.createServer(requestHandler);
     server.listen(0);
     server.on('listening', () => opn(`http://localhost:${server.address().port}/?id=${id}`));
@@ -59,26 +63,33 @@ function hostExperiment(params, results) {
 function requestHandler(request, response) {
   request.parsedUrl = parse(request.url, true);
   const pathname = request.parsedUrl.pathname;
-
-  if (request.method === 'GET') {
-    if (pathname === '/') {
-      reportRequestHandler(request, response);
-    } else if (pathname === '/blocked-url-patterns') {
-      blockedUrlPatternsRequestHandler(request, response);
+  try {
+    if (request.method === 'GET') {
+      if (pathname === '/') {
+        reportRequestHandler(request, response);
+      } else if (pathname === '/flags') {
+        flagsRequestHandler(request, response);
+      } else {
+        throw new HTTPError(404);
+      }
+    } else if (request.method === 'POST') {
+      if (pathname === '/rerun') {
+        rerunRequestHandler(request, response);
+      } else {
+        throw new HTTPError(404);
+      }
     } else {
-      response.writeHead(404);
-      response.end('404: Resource Not Found');
+      throw new HTTPError(405);
     }
-  } else if (request.method === 'POST') {
-    if (pathname === '/rerun') {
-      rerunRequestHandler(request, response);
+  } catch (err) {
+    if (err instanceof HTTPError) {
+      response.writeHead(err.statusCode);
+      response.end(err.message || http.STATUS_CODES[err.statusCode]);
     } else {
-      response.writeHead(404);
-      response.end('404: Resource Not Found');
+      response.writeHead(500);
+      response.end(http.STATUS_CODES[500]);
+      log.err('PerformanceXServer', err.code, err);
     }
-  } else {
-    response.writeHead(405);
-    response.end('405: Method Not Supported');
   }
 }
 
@@ -87,20 +98,16 @@ function reportRequestHandler(request, response) {
     response.writeHead(200, {'Content-Type': 'text/html'});
     response.end(database.getHTML(request.parsedUrl.query.id));
   } catch (err) {
-    response.writeHead(404);
-    response.end('404: Resource Not Found');
+    throw new HTTPError(404);
   }
 }
 
-function blockedUrlPatternsRequestHandler(request, response) {
+function flagsRequestHandler(request, response) {
   try {
-    const blockedUrlPatterns = database.getFlags(request.parsedUrl.query.id).blockedUrlPatterns;
     response.writeHead(200, {'Content-Type': 'text/json'});
-    response.end(JSON.stringify(blockedUrlPatterns || []));
+    response.end(JSON.stringify(database.getFlags(request.parsedUrl.query.id)));
   } catch (err) {
-    response.writeHead(404);
-    response.end('404: Resource Not Found');
-    return;
+    throw new HTTPError(404);
   }
 }
 
@@ -118,12 +125,18 @@ function rerunRequestHandler(request, response) {
         results.artifacts = undefined;
         const id = database.saveData(flags, results);
         response.writeHead(200);
-        response.end(`/?id=${id}`);
+        response.end(id);
       });
     });
   } catch (err) {
-    response.writeHead(404);
-    response.end('404: Resource Not Found');
+    throw new HTTPError(404);
+  }
+}
+
+class HTTPError extends Error {
+  constructor(statusCode, message) {
+    super(message);
+    this.statusCode = statusCode;
   }
 }
 

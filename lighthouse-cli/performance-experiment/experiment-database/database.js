@@ -27,6 +27,7 @@ class ExperimentDatabase {
   constructor(url, config) {
     this._url = url;
     this._config = config;
+    this._defaultId = undefined;
 
     this._root = fs.mkdtempSync(`${__dirname}/experiment-data-`);
     this._timeStamps = {};
@@ -40,6 +41,20 @@ class ExperimentDatabase {
     return this._config;
   }
 
+  /*
+   * Set Default ID. When id is not provided to .getHTML() or .getFlags(), default ID will be used
+   * @param {!Object} lhFlags
+   * @param {!Object} lhResults
+   */
+  setDefaultId(id) {
+    this._defaultId = id;
+  }
+
+  /*
+   * Save experiment data
+   * @param {!Object} lhFlags
+   * @param {!Object} lhResults
+   */
   saveData(lhFlags, lhResults) {
     const id = assetSaver.getFilenamePrefix(lhResults);
     this._timeStamps[id] = lhResults.generatedTime;
@@ -51,7 +66,13 @@ class ExperimentDatabase {
     return id;
   }
 
+  /*
+   * Get report.html
+   * @param {?string} id When id is not provided, this._defaultId will be used
+   */
   getHTML(id) {
+    id = id || this._defaultId;
+
     const results = JSON.parse(fs.readFileSync(path.join(this._root, id, 'results.json'), 'utf8'));
     results.relatedReports = Object.keys(this._timeStamps)
       .filter(key => key !== id)
@@ -64,14 +85,20 @@ class ExperimentDatabase {
     return perfXReportGenerator.generateHTML(results, 'perf-x');
   }
 
+  /*
+   * Get flags.json
+   * @param {?string} id When id is not provided, this._defaultId will be used
+   */
   getFlags(id) {
+    id = id || this._defaultId;
     return JSON.parse(fs.readFileSync(path.join(this._root, id, 'flags.json'), 'utf8'));
   }
 
+  /*
+   * Delete all the files created by this object
+   */
   clear() {
-    return new Promise((resolve, reject) => {
-      rimraf(this._root, () => resolve());
-    });
+    rimraf.sync(this._root);
   }
 }
 
