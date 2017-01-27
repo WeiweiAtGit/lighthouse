@@ -342,8 +342,7 @@ class ReportGenerator {
       scripts: this.getReportJS(reportContext),
       aggregations: results.aggregations,
       auditsByCategory: this._createPWAAuditsByCategory(results.aggregations),
-      runtimeConfig: results.runtimeConfig,
-      relatedReports: results.relatedReports || []
+      runtimeConfig: results.runtimeConfig
     });
   }
 }

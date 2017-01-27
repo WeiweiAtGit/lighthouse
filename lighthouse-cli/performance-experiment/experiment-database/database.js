@@ -72,16 +72,17 @@ class ExperimentDatabase {
    */
   getHTML(id) {
     id = id || this._defaultId;
+    const perfXReportGenerator = new PerfXReportGenerator();
 
     const results = JSON.parse(fs.readFileSync(path.join(this._root, id, 'results.json'), 'utf8'));
-    results.relatedReports = Object.keys(this._timeStamps)
+    const relatedReports = Object.keys(this._timeStamps)
       .filter(key => key !== id)
       .map(key => {
         const generatedTime = this._timeStamps[key];
         return {reportUrl: `/?id=${key}`, url: this._url, generatedTime};
       });
+    perfXReportGenerator.setRelatedReports(relatedReports);
 
-    const perfXReportGenerator = new PerfXReportGenerator();
     return perfXReportGenerator.generateHTML(results, 'perf-x');
   }
 

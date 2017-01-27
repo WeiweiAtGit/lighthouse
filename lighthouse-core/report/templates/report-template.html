@@ -38,35 +38,19 @@ limitations under the License.
             <h1 class="menu__header-title">Lighthouse</h1>
             <div class="menu__header-version">Version: {{lighthouseVersion}}</div>
           </div>
-          {{#each relatedReports}}
-            {{#if_less_than generatedTime ../generatedTime }}
-              <a class="menu__report-tab" href="{{ reportUrl }}">
-                <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
-                <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
-              </a>
-            {{/if_less_than}}
-          {{/each}}
-          <a class="menu__report-tab" href="#">
-            <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
-            <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
-          </a>
-          <ul class="menu__nav">
-            {{#each aggregations}}
-            <li class="menu__nav-item">
-              <a class="menu__link" href="#{{nameToLink this.name}}">
-                {{ this.name }}
-              </a>
-            </li>
-            {{/each}}
-          </ul>
-          {{#each relatedReports}}
-            {{#if_less_than ../generatedTime generatedTime }}
-              <a class="menu__report-tab" href="{{ reportUrl }}">
-                <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
-                <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
-              </a>
-            {{/if_less_than}}
-          {{/each}}
+          {{#if_eq reportContext "perf-x" }}
+            {{> perf-x-left-nav}}
+          {{else}}
+            <ul class="menu__nav">
+              {{#each aggregations}}
+              <li class="menu__nav-item">
+                <a class="menu__link" href="#{{nameToLink this.name}}">
+                  {{ this.name }}
+                </a>
+              </li>
+              {{/each}}
+            </ul>
+          {{/if_eq}}
         </div>
       </div>
       <div class="report-body__header-container js-header-container">

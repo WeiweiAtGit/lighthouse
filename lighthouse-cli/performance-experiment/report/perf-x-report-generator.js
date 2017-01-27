@@ -24,19 +24,34 @@ const Handlebars = require('handlebars');
 const ReportGenerator = require('../../../lighthouse-core/report/report-generator');
 const configPanelPartial = fs.readFileSync(path.join(__dirname, 'partials/config-panel.html'),
     'utf8');
+const perfXLeftNavPartial = fs.readFileSync(path.join(__dirname, 'partials/left-nav.html'),
+    'utf8');
 
 class PerfXReportGenerator extends ReportGenerator {
+  constructor() {
+    super();
+    this._relatedReports = [];
+  }
+
   getReportJS(reportContext) {
     const scriptArr = super.getReportJS(reportContext);
     scriptArr.push(fs.readFileSync(path.join(__dirname, 'scripts/perf-x.js'), 'utf8'));
     return scriptArr;
   }
 
+  setRelatedReports(relatedReports) {
+    this._relatedReports = relatedReports;
+  }
+
   _registerFormatters(audits) {
     super._registerFormatters(audits);
+
     const configPanelTemplate = Handlebars.compile(configPanelPartial);
     const criticalRequestChains = audits['critical-request-chains'].extendedInfo.value;
     Handlebars.registerPartial('config-panel', configPanelTemplate(criticalRequestChains));
+
+    Handlebars.registerHelper('createRelatedReportsContext', opts => opts.fn(this._relatedReports));
+    Handlebars.registerPartial('perf-x-left-nav', perfXLeftNavPartial);
   }
 }
 

@@ -1,0 +1,70 @@
+<style>
+:root[data-report-context="perf-x"] .menu__link {
+  padding: 0 35px;
+}
+
+.menu__report-tab {
+  padding: 3px 13px;
+  color: #777;
+  border-top: 1px solid #EBEBEB;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  text-decoration: none;
+  height: 55px;
+}
+
+.menu__report-tab:hover {
+  background-color: #448aff;
+  color: #FFF;
+}
+
+.menu__report-tab__url {
+  font-size: 15px;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  line-height: 30px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.menu__report-tab__time {
+  font-size: 11px;
+  line-height: 11px;
+  padding-left: 2px;
+}
+</style>
+
+{{#createRelatedReportsContext}}
+  {{#each this}}
+    {{#if_less_than generatedTime ../../generatedTime }}
+    <a class="menu__report-tab" href="{{ reportUrl }}">
+      <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+      <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+    </a>
+    {{/if_less_than}}
+  {{/each}}
+{{/createRelatedReportsContext}}
+<a class="menu__report-tab" href="#">
+ <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+ <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+</a>
+<ul class="menu__nav">
+  {{#each aggregations}}
+  <li class="menu__nav-item">
+   <a class="menu__link" href="#{{nameToLink this.name}}">
+     {{ this.name }}
+   </a>
+  </li>
+  {{/each}}
+</ul>
+{{#createRelatedReportsContext}}
+  {{#each this}}
+    {{#if_less_than ../../generatedTime generatedTime }}
+    <a class="menu__report-tab" href="{{ reportUrl }}">
+      <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+      <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+    </a>
+    {{/if_less_than}}
+  {{/each}}
+{{/createRelatedReportsContext}}
