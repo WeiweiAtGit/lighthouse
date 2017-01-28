@@ -46,7 +46,6 @@ function hostExperiment(params, results) {
   return new Promise(resolve => {
     database = new ExperimentDatabase(params.url, params.config);
     const id = database.saveData(params.flags, results);
-    database.setDefaultId(id);
 
     const server = http.createServer(requestHandler);
     server.listen(0);

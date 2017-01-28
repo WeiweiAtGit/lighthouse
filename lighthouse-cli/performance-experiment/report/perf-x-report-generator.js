@@ -24,13 +24,13 @@ const Handlebars = require('handlebars');
 const ReportGenerator = require('../../../lighthouse-core/report/report-generator');
 const configPanelPartial = fs.readFileSync(path.join(__dirname, 'partials/config-panel.html'),
     'utf8');
-const perfXLeftNavPartial = fs.readFileSync(path.join(__dirname, 'partials/left-nav.html'),
+const perfXReportsNavPartial = fs.readFileSync(path.join(__dirname, 'partials/reports-nav.html'),
     'utf8');
 
 class PerfXReportGenerator extends ReportGenerator {
   constructor() {
     super();
-    this._relatedReports = [];
+    this._reportsCatalog = [];
   }
 
   getReportJS(reportContext) {
@@ -39,8 +39,8 @@ class PerfXReportGenerator extends ReportGenerator {
     return scriptArr;
   }
 
-  setRelatedReports(relatedReports) {
-    this._relatedReports = relatedReports;
+  setReportsCatalog(reportsInfo, mainReportId) {
+    this._reportsCatalog = {reportsInfo, mainReportId};
   }
 
   _registerFormatters(audits) {
@@ -50,8 +50,8 @@ class PerfXReportGenerator extends ReportGenerator {
     const criticalRequestChains = audits['critical-request-chains'].extendedInfo.value;
     Handlebars.registerPartial('config-panel', configPanelTemplate(criticalRequestChains));
 
-    Handlebars.registerHelper('createRelatedReportsContext', opts => opts.fn(this._relatedReports));
-    Handlebars.registerPartial('perf-x-left-nav', perfXLeftNavPartial);
+    Handlebars.registerHelper('createReportsNavContext', opts => opts.fn(this._reportsCatalog));
+    Handlebars.registerPartial('perf-x-reports-nav', perfXReportsNavPartial);
   }
 }
 

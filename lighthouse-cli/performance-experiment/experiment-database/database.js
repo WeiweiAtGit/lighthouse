@@ -29,7 +29,7 @@ class ExperimentDatabase {
     this._config = config;
     this._defaultId = undefined;
 
-    this._root = fs.mkdtempSync(`${__dirname}/experiment-data-`);
+    this._fsRoot = fs.mkdtempSync(`${__dirname}/experiment-data-`);
     this._timeStamps = {};
   }
 
@@ -42,15 +42,6 @@ class ExperimentDatabase {
   }
 
   /*
-   * Set Default ID. When id is not provided to .getHTML() or .getFlags(), default ID will be used
-   * @param {!Object} lhFlags
-   * @param {!Object} lhResults
-   */
-  setDefaultId(id) {
-    this._defaultId = id;
-  }
-
-  /*
    * Save experiment data
    * @param {!Object} lhFlags
    * @param {!Object} lhResults
@@ -59,7 +50,7 @@ class ExperimentDatabase {
     const id = assetSaver.getFilenamePrefix(lhResults);
     this._timeStamps[id] = lhResults.generatedTime;
 
-    const dirPath = path.join(this._root, id);
+    const dirPath = path.join(this._fsRoot, id);
     fs.mkdirSync(dirPath);
     fs.writeFileSync(path.join(dirPath, 'flags.json'), JSON.stringify(lhFlags));
     fs.writeFileSync(path.join(dirPath, 'results.json'), JSON.stringify(lhResults));
@@ -68,38 +59,38 @@ class ExperimentDatabase {
 
   /*
    * Get report.html
-   * @param {?string} id When id is not provided, this._defaultId will be used
+   * @param {string} id
    */
   getHTML(id) {
-    id = id || this._defaultId;
     const perfXReportGenerator = new PerfXReportGenerator();
 
-    const results = JSON.parse(fs.readFileSync(path.join(this._root, id, 'results.json'), 'utf8'));
-    const relatedReports = Object.keys(this._timeStamps)
-      .filter(key => key !== id)
+    const results = JSON.parse(fs.readFileSync(path.join(this._fsRoot, id, 'results.json'),
+        'utf8'));
+
+    const reportsInfo = Object.keys(this._timeStamps)
       .map(key => {
         const generatedTime = this._timeStamps[key];
-        return {reportUrl: `/?id=${key}`, url: this._url, generatedTime};
+        return {url: this._url, id: key, generatedTime};
       });
-    perfXReportGenerator.setRelatedReports(relatedReports);
+    perfXReportGenerator.setReportsCatalog(reportsInfo, id);
 
     return perfXReportGenerator.generateHTML(results, 'perf-x');
   }
 
   /*
    * Get flags.json
-   * @param {?string} id When id is not provided, this._defaultId will be used
+   * @param {string} id
    */
   getFlags(id) {
     id = id || this._defaultId;
-    return JSON.parse(fs.readFileSync(path.join(this._root, id, 'flags.json'), 'utf8'));
+    return JSON.parse(fs.readFileSync(path.join(this._fsRoot, id, 'flags.json'), 'utf8'));
   }
 
   /*
    * Delete all the files created by this object
    */
   clear() {
-    rimraf.sync(this._root);
+    rimraf.sync(this._fsRoot);
   }
 }
 
