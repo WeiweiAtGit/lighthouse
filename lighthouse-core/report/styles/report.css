@@ -410,11 +410,10 @@ body {
 }
 
 .report-body__fixed-header-container.expanded .report-body__header-dropdown {
-  display: flex;
+  display: block;
 }
 
 .report-body__header-dropdown .config-section {
-  flex: 1 1 auto;
   padding: 10px;
 }
 
@@ -432,6 +431,11 @@ body {
 
 .report-body__header-dropdown .config-section__item {
   margin-top: 5px;
+}
+
+.report-body__header-dropdown .config-section__desc {
+  line-height: var(--subitem-line-height);
+  word-wrap: break-word;
 }
 
 .report-body__fixed-footer-container {

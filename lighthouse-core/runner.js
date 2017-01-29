@@ -20,6 +20,7 @@ const Driver = require('./gather/driver.js');
 const GatherRunner = require('./gather/gather-runner');
 const Aggregate = require('./aggregator/aggregate');
 const Audit = require('./audits/audit');
+const emulation = require('./lib/emulation');
 const log = require('./lib/log');
 const fs = require('fs');
 const path = require('path');
@@ -133,15 +134,6 @@ class Runner {
             a => Aggregate.aggregate(a, runResults.auditResults));
         }
 
-        const runtimeConfig = {
-          environment: [
-            {name: 'CPU Throttling', value: !opts.flags.disableCpuThrottling},
-            {name: 'Network Throttling', value: !opts.flags.disableNetworkThrottling},
-            {name: 'Device Emulation', value: !opts.flags.disableDeviceEmulation}
-          ],
-          blockedUrlPatterns: opts.flags.blockedUrlPatterns || []
-        };
-
         return {
           lighthouseVersion: require('../package').version,
           generatedTime: (new Date()).toJSON(),
@@ -149,8 +141,8 @@ class Runner {
           url: opts.url,
           audits: formattedAudits,
           artifacts: runResults.artifacts,
-          aggregations,
-          runtimeConfig
+          runtimeConfig: Runner.getRuntimeConfig(opts.flags),
+          aggregations
         };
       });
 
@@ -269,6 +261,34 @@ class Runner {
     } catch (requireError) {}
 
     throw new Error(errorString + ` and '${relativePath}')`);
+  }
+
+  /**
+   * Get runtime configuration specified by the flags
+   * @param {!Object} flags
+   * @return {!Object} runtime config
+   */
+  static getRuntimeConfig(flags) {
+    const emulationDesc = emulation.getEmulationDesc();
+    const environment = [
+      {
+        name: 'CPU Throttling',
+        value: !flags.disableCpuThrottling,
+        description: emulationDesc['cpuThrottling']
+      },
+      {
+        name: 'Network Throttling',
+        value: !flags.disableNetworkThrottling,
+        description: emulationDesc['networkThrottling']
+      },
+      {
+        name: 'Device Emulation',
+        value: !flags.disableDeviceEmulation,
+        description: emulationDesc['deviceEmulation']
+      }
+    ];
+
+    return {environment, blockedUrlPatterns: flags.blockedUrlPatterns || []};
   }
 }
 
