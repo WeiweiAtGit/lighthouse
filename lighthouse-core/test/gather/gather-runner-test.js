@@ -233,7 +233,7 @@ describe('GatherRunner', function() {
     });
 
     return GatherRunner.setupDriver(driver, {flags: {blockedUrlPatterns: urlPatterns.slice()}})
-      .then(() => assert.equal(receivedUrlPatterns.sort().join(), urlPatterns.sort().join()));
+      .then(() => assert.deepStrictEqual(receivedUrlPatterns.sort(), urlPatterns.sort()));
   });
 
   it('does not throw when blockedUrlPatterns is not given', () => {
