@@ -20,14 +20,12 @@
 const fs = require('fs');
 const path = require('path');
 const rimraf = require('rimraf');
-const PerfXReportGenerator = require('../report/perf-x-report-generator');
 const assetSaver = require('../../../lighthouse-core/lib/asset-saver');
 
 class ExperimentDatabase {
   constructor(url, config) {
     this._url = url;
     this._config = config;
-    this._defaultId = undefined;
 
     this._fsRoot = fs.mkdtempSync(`${__dirname}/experiment-data-`);
     this._timeStamps = {};
@@ -39,6 +37,10 @@ class ExperimentDatabase {
 
   get config() {
     return this._config;
+  }
+
+  get timeStamps() {
+    return this._timeStamps;
   }
 
   /*
@@ -61,20 +63,8 @@ class ExperimentDatabase {
    * Get report.html
    * @param {string} id
    */
-  getHTML(id) {
-    const perfXReportGenerator = new PerfXReportGenerator();
-
-    const results = JSON.parse(fs.readFileSync(path.join(this._fsRoot, id, 'results.json'),
-        'utf8'));
-
-    const reportsInfo = Object.keys(this._timeStamps)
-      .map(key => {
-        const generatedTime = this._timeStamps[key];
-        return {url: this._url, id: key, generatedTime};
-      });
-    perfXReportGenerator.setReportsCatalog(reportsInfo, id);
-
-    return perfXReportGenerator.generateHTML(results, 'perf-x');
+  getResults(id) {
+    return JSON.parse(fs.readFileSync(path.join(this._fsRoot, id, 'results.json'), 'utf8'));
   }
 
   /*
@@ -82,7 +72,6 @@ class ExperimentDatabase {
    * @param {string} id
    */
   getFlags(id) {
-    id = id || this._defaultId;
     return JSON.parse(fs.readFileSync(path.join(this._fsRoot, id, 'flags.json'), 'utf8'));
   }
 

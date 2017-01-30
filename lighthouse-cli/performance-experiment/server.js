@@ -34,8 +34,10 @@ const opn = require('opn');
 const log = require('../../lighthouse-core/lib/log');
 const lighthouse = require('../../lighthouse-core');
 const ExperimentDatabase = require('./experiment-database');
+const PerfXReportGenerator = require('./report/perf-x-report-generator');
 
 let database;
+let defaultReportId;
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
  * @param {!Object} params A JSON contains lighthouse parameters
@@ -46,6 +48,7 @@ function hostExperiment(params, results) {
   return new Promise(resolve => {
     database = new ExperimentDatabase(params.url, params.config);
     const id = database.saveData(params.flags, results);
+    defaultReportId = id;
 
     const server = http.createServer(requestHandler);
     server.listen(0);
@@ -94,8 +97,19 @@ function requestHandler(request, response) {
 
 function reportRequestHandler(request, response) {
   try {
+    const id = request.parsedUrl.query.id || defaultReportId;
+
+    const reportsMetadata = Object.keys(database.timeStamps).map(key => {
+      const generatedTime = database.timeStamps[key];
+      return {url: database.url, reportHref: `/?id=${key}`, generatedTime};
+    });
+    const reportsCatalog = {reportsMetadata, selectedReportHref: `/?id=${id}`};
+
+    const results = database.getResults(id);
+    const perfXReportGenerator = new PerfXReportGenerator();
+
     response.writeHead(200, {'Content-Type': 'text/html'});
-    response.end(database.getHTML(request.parsedUrl.query.id));
+    response.end(perfXReportGenerator.generateHTML(results, 'perf-x', reportsCatalog));
   } catch (err) {
     throw new HTTPError(404);
   }
@@ -104,7 +118,7 @@ function reportRequestHandler(request, response) {
 function flagsRequestHandler(request, response) {
   try {
     response.writeHead(200, {'Content-Type': 'text/json'});
-    response.end(JSON.stringify(database.getFlags(request.parsedUrl.query.id)));
+    response.end(JSON.stringify(database.getFlags(request.parsedUrl.query.id || defaultReportId)));
   } catch (err) {
     throw new HTTPError(404);
   }
@@ -112,7 +126,7 @@ function flagsRequestHandler(request, response) {
 
 function rerunRequestHandler(request, response) {
   try {
-    const flags = database.getFlags(request.parsedUrl.query.id);
+    const flags = database.getFlags(request.parsedUrl.query.id || defaultReportId);
     let message = '';
     request.on('data', data => message += data);
 

@@ -315,9 +315,11 @@ class ReportGenerator {
    * Generates the Lighthouse report HTML.
    * @param {!Object} results Lighthouse results.
    * @param {!string} reportContext What app is requesting the report (eg. devtools, extension)
+   * @param {?Object} reportsCatalog Basic info about all the reports to include in left nav bar
+   *        {reportsInfo: Array<{url, generatedTime, reportHref}>, selectedReportHref}
    * @return {string} HTML of the report page.
    */
-  generateHTML(results, reportContext) {
+  generateHTML(results, reportContext, reportsCatalog) {
     reportContext = reportContext || 'extension';
 
     this._registerFormatters(results.audits);
@@ -342,7 +344,8 @@ class ReportGenerator {
       scripts: this.getReportJS(reportContext),
       aggregations: results.aggregations,
       auditsByCategory: this._createPWAAuditsByCategory(results.aggregations),
-      runtimeConfig: results.runtimeConfig
+      runtimeConfig: results.runtimeConfig,
+      reportsCatalog
     });
   }
 }

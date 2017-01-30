@@ -15,6 +15,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 -->
+{{#*inline "createNav"}}
+  <ul class="menu__nav">
+    {{#each this}}
+    <li class="menu__nav-item">
+     <a class="menu__link" href="#{{nameToLink this.name}}">
+       {{ this.name }}
+     </a>
+    </li>
+    {{/each}}
+  </ul>
+{{/inline}}
+
 <!doctype html>
 
 <html data-report-context="{{reportContext}}">
@@ -38,19 +50,19 @@ limitations under the License.
             <h1 class="menu__header-title">Lighthouse</h1>
             <div class="menu__header-version">Version: {{lighthouseVersion}}</div>
           </div>
-          {{#if_eq reportContext "perf-x" }}
-            {{> perf-x-reports-nav}}
+          {{#if reportsCatalog }}
+            {{#each reportsCatalog.reportsMetadata }}
+              <a class="menu__report-tab" href="{{ reportHref }}">
+                <p class="menu__report-tab__url" title="{{ url }}">Report for: {{ url }}</p>
+                <p class="menu__report-tab__time">Generated on: {{ format_time generatedTime }}</p>
+              </a>
+              {{#if_eq reportHref ../reportsCatalog.selectedReportHref }}
+                {{> createNav ../aggregations }}
+              {{/if_eq}}
+            {{/each}}
           {{else}}
-            <ul class="menu__nav">
-              {{#each aggregations}}
-              <li class="menu__nav-item">
-                <a class="menu__link" href="#{{nameToLink this.name}}">
-                  {{ this.name }}
-                </a>
-              </li>
-              {{/each}}
-            </ul>
-          {{/if_eq}}
+            {{> createNav aggregations }}
+          {{/if}}
         </div>
       </div>
       <div class="report-body__header-container js-header-container">
