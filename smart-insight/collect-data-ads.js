@@ -3,7 +3,8 @@
 'use strict';
 
 /*
- *  Added --blocked-url-patterns as an array flag to lighthouse-cli/bin.ts
+ *  Assign URLs in ./data/blocked-ads to blockedUrlPatterns when --block-ads in bin.ts
+ *  Those URLs are not passes by flags because there are too many.
  *  Modified lighthouse-core/gather/computed/critical-request-chains.js to treat every request as
  *  critical request
  */
@@ -14,19 +15,14 @@ const path = require('path');
 const readline = require('readline');
 const urlParse = require('url').parse;
 
-function runLighthouse(url, blockedUrlPatterns) {
+function runLighthouse(url, blockAds) {
   let cmd = `node lighthouse-cli ${url} --quiet --output json --perf`;
-  if (blockedUrlPatterns && blockedUrlPatterns.length >= 1) {
-    // to deal with a bug where yargs does not convert parameters to an array when the array is of
-    // length 1 and the flag is accessed via camel case attribute name (issue #768)
-    if (blockedUrlPatterns.length === 1) {
-      blockedUrlPatterns.push('to-make-it-become-a-list');
-    }
-    cmd += ` --blocked-url-patterns ${blockedUrlPatterns.join(' ')}`;
+  if (blockAds) {
+    cmd += ' --block-ads';
   }
 
   return new Promise((resolve, reject) => {
-    exec(cmd, {maxBuffer: 64 * 1024 * 1024}, (error, stdout, stderr) => {
+    exec(cmd, {maxBuffer: 16 * 1024 * 1024}, (error, stdout, stderr) => {
       if (error) {
         reject(error);
         return;
@@ -92,7 +88,7 @@ function processRawData(rawData) {
   return {avgBeforeBlocking, avgAfterBlocking, diff};
 }
 
-function executeExperiment({url, blockedUrlPatterns, repeatTime}) {
+function executeExperiment({url, repeatTime}) {
   let run = Promise.resolve();
   const perfDataBeforeBlocking = [];
   const perfDataAfterBlocking = [];
@@ -100,7 +96,7 @@ function executeExperiment({url, blockedUrlPatterns, repeatTime}) {
   let screenshotAfterBlocking;
   for (let num = 0; num < repeatTime; ++num) {
     run = run
-      .then(() => runLighthouse(url, blockedUrlPatterns))
+      .then(() => runLighthouse(url, true))
       .then(lhResults => {
         perfDataAfterBlocking.push(getSimplifiedResults(lhResults));
         if (!screenshotAfterBlocking) {
@@ -108,7 +104,7 @@ function executeExperiment({url, blockedUrlPatterns, repeatTime}) {
           screenshotAfterBlocking = screenshots[screenshots.length - 1];
         }
       })
-      .then(() => runLighthouse(url))
+      .then(() => runLighthouse(url, false))
       .then(lhResults => {
         perfDataBeforeBlocking.push(getSimplifiedResults(lhResults));
         if (!screenshotBeforeBlocking) {
@@ -140,9 +136,7 @@ function getResourcesOfType(requestTree, type) {
 }
 
 const configuration = {
-  'catagory': 'block-fonts',
-  'blockedUrlPatterns': fs.readFileSync(path.join(__dirname, 'blocked-url-patterns/font-urls.txt'),
-      'utf8').split('\n').filter(line => !line.startsWith('! ')),
+  'catagory': 'block-ads',
   'repeatTime': 10
 };
 
