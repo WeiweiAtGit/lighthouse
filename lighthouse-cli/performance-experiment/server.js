@@ -33,11 +33,11 @@ const parse = require('url').parse;
 const opn = require('opn');
 const log = require('../../lighthouse-core/lib/log');
 const lighthouse = require('../../lighthouse-core');
-const ExperimentDatabase = require('./experiment-database');
+const ExperimentDatabase = require('./experiment-database/database');
 const PerfXReportGenerator = require('./report/perf-x-report-generator');
 
 let database;
-let defaultReportId;
+let fallbackReportId;
 /**
  * Start the server with an arbitrary port and open report page in the default browser.
  * @param {!Object} params A JSON contains lighthouse parameters
@@ -48,7 +48,7 @@ function hostExperiment(params, results) {
   return new Promise(resolve => {
     database = new ExperimentDatabase(params.url, params.config);
     const id = database.saveData(params.flags, results);
-    defaultReportId = id;
+    fallbackReportId = id;
 
     const server = http.createServer(requestHandler);
     server.listen(0);
@@ -97,7 +97,7 @@ function requestHandler(request, response) {
 
 function reportRequestHandler(request, response) {
   try {
-    const id = request.parsedUrl.query.id || defaultReportId;
+    const id = request.parsedUrl.query.id || fallbackReportId;
 
     const reportsMetadata = Object.keys(database.timeStamps).map(key => {
       const generatedTime = database.timeStamps[key];
@@ -124,7 +124,7 @@ function reportRequestHandler(request, response) {
 function flagsRequestHandler(request, response) {
   try {
     response.writeHead(200, {'Content-Type': 'text/json'});
-    response.end(JSON.stringify(database.getFlags(request.parsedUrl.query.id || defaultReportId)));
+    response.end(JSON.stringify(database.getFlags(request.parsedUrl.query.id || fallbackReportId)));
   } catch (err) {
     throw new HTTPError(404);
   }
@@ -132,7 +132,7 @@ function flagsRequestHandler(request, response) {
 
 function rerunRequestHandler(request, response) {
   try {
-    const flags = database.getFlags(request.parsedUrl.query.id || defaultReportId);
+    const flags = database.getFlags(request.parsedUrl.query.id || fallbackReportId);
     let message = '';
     request.on('data', data => message += data);
 
