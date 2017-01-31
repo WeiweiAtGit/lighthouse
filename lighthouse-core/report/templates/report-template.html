@@ -84,8 +84,8 @@ limitations under the License.
               {{#each runtimeConfig.environment }}
               <li class="config-section__item">
                 <p class="config-section__desc">
-                  {{ this.name }} ({{ this.description }})
-                  <strong>: {{#if this.value }}Enabled{{else}}Disabled{{/if}}</strong>
+                  {{ this.name }} ({{ this.description }}):
+                  <strong> {{#if this.value }}Enabled{{else}}Disabled{{/if}}</strong>
                 </p>
               </li>
               {{/each}}
