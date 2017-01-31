@@ -111,17 +111,6 @@ class ReportGenerator {
       }
     });
 
-    // value < value2?
-    Handlebars.registerHelper('if_less_than', function(lhs, rhs, opts) {
-      if (lhs < rhs) {
-        // eslint-disable-next-line no-invalid-this
-        return opts.fn(this);
-      } else {
-        // eslint-disable-next-line no-invalid-this
-        return opts.inverse(this);
-      }
-    });
-
     // arg1 && arg2 && ... && argn
     Handlebars.registerHelper('and', function(...args) {
       let arg = false;
@@ -316,7 +305,6 @@ class ReportGenerator {
    * @param {!Object} results Lighthouse results.
    * @param {!string} reportContext What app is requesting the report (eg. devtools, extension)
    * @param {?Object} reportsCatalog Basic info about all the reports to include in left nav bar
-   *        {reportsInfo: Array<{url, generatedTime, reportHref}>, selectedReportHref}
    * @return {string} HTML of the report page.
    */
   generateHTML(results, reportContext, reportsCatalog) {
@@ -333,7 +321,6 @@ class ReportGenerator {
     });
 
     const template = Handlebars.compile(this.getReportTemplate());
-
     return template({
       url: results.url,
       lighthouseVersion: results.lighthouseVersion,

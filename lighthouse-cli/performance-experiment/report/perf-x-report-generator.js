@@ -26,11 +26,6 @@ const configPanelPartial = fs.readFileSync(path.join(__dirname, 'partials/config
     'utf8');
 
 class PerfXReportGenerator extends ReportGenerator {
-  constructor() {
-    super();
-    this._reportsCatalog = [];
-  }
-
   getReportJS(reportContext) {
     const scriptArr = super.getReportJS(reportContext);
     scriptArr.push(fs.readFileSync(path.join(__dirname, 'scripts/perf-x.js'), 'utf8'));
@@ -39,7 +34,6 @@ class PerfXReportGenerator extends ReportGenerator {
 
   _registerFormatters(audits) {
     super._registerFormatters(audits);
-
     const configPanelTemplate = Handlebars.compile(configPanelPartial);
     const criticalRequestChains = audits['critical-request-chains'].extendedInfo.value;
     Handlebars.registerPartial('config-panel', configPanelTemplate(criticalRequestChains));
