@@ -42,7 +42,7 @@ class LighthouseReport {
       openButton.addEventListener('click', this.sendJSONReport.bind(this));
     }
 
-    const headerContainer = document.querySelector('.js-fixed-header-container');
+    const headerContainer = document.querySelector('.js-header-container');
     const toggleButton = headerContainer.querySelector('.js-header-toggle');
     toggleButton.addEventListener('click', () => headerContainer.classList.toggle('expanded'));
   }
