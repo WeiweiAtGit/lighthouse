@@ -46,9 +46,6 @@ limitations under the License.
               </a>
             </li>
             {{/each}}
-            <li class="menu__nav-item">
-              <a class="menu__link" href="#runtime-configuration">Runtime Configuration</a>
-            </li>
           </ul>
         </div>
       </div>
@@ -85,7 +82,7 @@ limitations under the License.
               <li class="config-section__item">
                 <p class="config-section__desc">
                   {{ this.name }} ({{ this.description }}):
-                  <strong> {{#if this.value }}Enabled{{else}}Disabled{{/if}}</strong>
+                  <strong> {{#if this.enabled }}Enabled{{else}}Disabled{{/if}}</strong>
                 </p>
               </li>
               {{/each}}

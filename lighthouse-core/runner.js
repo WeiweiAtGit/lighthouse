@@ -273,17 +273,17 @@ class Runner {
     const environment = [
       {
         name: 'CPU Throttling',
-        value: !flags.disableCpuThrottling,
+        enabled: !flags.disableCpuThrottling,
         description: emulationDesc['cpuThrottling']
       },
       {
         name: 'Network Throttling',
-        value: !flags.disableNetworkThrottling,
+        enabled: !flags.disableNetworkThrottling,
         description: emulationDesc['networkThrottling']
       },
       {
         name: 'Device Emulation',
-        value: !flags.disableDeviceEmulation,
+        enabled: !flags.disableDeviceEmulation,
         description: emulationDesc['deviceEmulation']
       }
     ];
