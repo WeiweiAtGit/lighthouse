@@ -31,8 +31,7 @@ class ConfigPanel {
     this._messageField = this._configPanel.querySelector('.js-message');
     this._urlBlockingList = this._configPanel.querySelector('.js-url-blocking-patterns');
     this._urlBlockingStatus = {};
-    const match = location.search.match(/[?&]id=([^&]*)/);
-    this._reportId = match ? match[1]: '';
+    this._reportId = new URL(window.location).searchParams.get('id');
 
     const bodyToggle = this._configPanel.querySelector('.js-panel-toggle');
     bodyToggle.addEventListener('click', () => this._toggleBody());

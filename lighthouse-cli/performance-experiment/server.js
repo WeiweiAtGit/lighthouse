@@ -104,10 +104,7 @@ function reportRequestHandler(request, response) {
       return {url: database.url, reportHref: `/?id=${key}`, generatedTime};
     });
     reportsMetadata.sort((metadata1, metadata2) => {
-      if (metadata1.generatedTime === metadata2.generatedTime) {
-        return 0;
-      }
-      return metadata1.generatedTime < metadata2.generatedTime ? -1 : 1;
+      return metadata1.generatedTime - metadata2.generatedTime;
     });
     const reportsCatalog = {reportsMetadata, selectedReportHref: `/?id=${id}`};
 
