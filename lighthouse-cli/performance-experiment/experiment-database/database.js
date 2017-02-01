@@ -23,20 +23,9 @@ const rimraf = require('rimraf');
 const assetSaver = require('../../../lighthouse-core/lib/asset-saver');
 
 class ExperimentDatabase {
-  constructor(url, config) {
-    this._url = url;
-    this._config = config;
-
+  constructor() {
     this._fsRoot = fs.mkdtempSync(`${__dirname}/experiment-data-`);
     this._timeStamps = {};
-  }
-
-  get url() {
-    return this._url;
-  }
-
-  get config() {
-    return this._config;
   }
 
   get timeStamps() {
