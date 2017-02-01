@@ -98,11 +98,7 @@ class ConfigPanel {
 
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `/rerun?id=${this._reportId}`, true);
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState !== 4) {
-        return;
-      }
-
+    xhr.onload = () => {
       if (xhr.status === 200) {
         location.assign(`?id=${xhr.responseText}`);
       } else if (xhr.status === 500) {
