@@ -23,35 +23,36 @@ const PerfXDatabase = require('../../../performance-experiment/experiment-databa
 const sampleResults = require('../../../../lighthouse-core/test/results/sample');
 
 describe('Perf-X Database', function() {
-  it('can store and output experiments data', () => {
-    const perfXDatabase = new PerfXDatabase();
-    process.on('exit', () => perfXDatabase.clear());
+  let perfXDatabase;
+  beforeEach(() => perfXDatabase = new PerfXDatabase());
+  afterEach(() => perfXDatabase.clear());
 
-    const testCases = [
+  it('can store and output experiments data', () => {
+    const dataSets = [
       {
         flags: {
           'blockedUrlPatterns': ['.woff2', '.jpg'],
-          'disable-network-throttling': false
+          'disableNetworkThrottling': false
         },
         results: sampleResults
       },
       {
         flags: {
           'blockedUrlPatterns': ['.woff'],
-          'disable-cpu-throttling': true,
-          'deep-reference': {'an-object': {'an array': ['something', 'an element']}}
+          'disableCpuThrottling': true,
+          'deepReference': {'anObject': {'anArray': ['anElement', 'anotherElement']}}
         },
         results: {
           generatedTime: new Date(2015, 6, 37, 0, 12, 55, 60).toJSON(),
           url: 'http://google.com/',
-          else: 'some-data'
+          else: 'someData'
         }
       },
       {
         flags: {
           'blockedUrlPatterns': ['.woff', 'cat.jpg', '*'],
-          'disable-cpu-throttling': false,
-          'disable-device-emulation': true
+          'disableCpuThrottling': false,
+          'disableDeviceEmulation': true
         },
         results: {
           'generatedTime': new Date(2014, 5, 36, 23, 56, 54, 99).toJSON(),
@@ -61,24 +62,21 @@ describe('Perf-X Database', function() {
       }
     ];
 
-    testCases.forEach(testCase => {
-      testCase.key = perfXDatabase.saveData(testCase.flags, testCase.results);
+    dataSets.forEach(dataSet => {
+      dataSet.key = perfXDatabase.saveData(dataSet.flags, dataSet.results);
     });
 
-    testCases.forEach(testCase => {
-      assert.deepStrictEqual(perfXDatabase.getFlags(testCase.key), testCase.flags);
-      assert.deepStrictEqual(perfXDatabase.getResults(testCase.key), testCase.results);
+    dataSets.forEach(dataSet => {
+      assert.deepStrictEqual(perfXDatabase.getFlags(dataSet.key), dataSet.flags);
+      assert.deepStrictEqual(perfXDatabase.getResults(dataSet.key), dataSet.results);
     });
   });
 
   it('prevents data from being changed by reference', () => {
-    const perfXDatabase = new PerfXDatabase();
-    process.on('exit', () => perfXDatabase.clear());
-
     const flags = {
       'blockedUrlPatterns': ['.woff', '.jpg', 'random'],
-      'disable-cpu-throttling': false,
-      'some-random-flag': 'some random value'
+      'disableCpuThrottling': false,
+      'randomFlag': 'randomString'
     };
     const results = JSON.parse(JSON.stringify(sampleResults));
 
@@ -86,23 +84,20 @@ describe('Perf-X Database', function() {
     const flagsBeforeChange = JSON.parse(JSON.stringify(perfXDatabase.getFlags(key)));
     const resultsBeforeChange = JSON.parse(JSON.stringify(perfXDatabase.getResults(key)));
 
-    // data won't be changed when the falgs/results passed to perfXDatabase.saveData is changed
+    // data won't be changed when the flags/results passed to perfXDatabase.saveData is changed
     flags.blockedUrlPatterns.push('something');
     results.url = undefined;
 
-    // data won't be changed when the falgs/results returned by perfXDatabase is changed
-    perfXDatabase.getFlags(key)['another attribute'] = 'random value';
-    perfXDatabase.getResults(key).aggregations.push('something-else');
+    // data won't be changed when the flags/results returned by perfXDatabase is changed
+    perfXDatabase.getFlags(key).anotherAttribute = 'random value';
+    perfXDatabase.getResults(key).aggregations.push('new element');
 
     assert.deepStrictEqual(perfXDatabase.getFlags(key), flagsBeforeChange);
     assert.deepStrictEqual(perfXDatabase.getResults(key), resultsBeforeChange);
   });
 
   it('returns correct timestamps', () => {
-    const perfXDatabase = new PerfXDatabase();
-    process.on('exit', () => perfXDatabase.clear());
-
-    const testCases = [
+    const dataSets = [
       {
         results: sampleResults
       },
@@ -120,12 +115,14 @@ describe('Perf-X Database', function() {
       }
     ];
 
-    testCases.forEach(testCase => {
-      testCase.key = perfXDatabase.saveData({}, testCase.results);
+    dataSets.forEach(dataSet => {
+      dataSet.key = perfXDatabase.saveData({}, dataSet.results);
     });
 
-    testCases.forEach(testCase => {
-      assert.strictEqual(perfXDatabase.timeStamps[testCase.key], testCase.results.generatedTime);
+    dataSets.forEach(dataSet => {
+      assert.strictEqual(perfXDatabase.timeStamps[dataSet.key], dataSet.results.generatedTime);
     });
+
+    assert.strictEqual(Object.keys(perfXDatabase.timeStamps).length, dataSets.length);
   });
 });
