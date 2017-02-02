@@ -31,6 +31,8 @@ class ConfigPanel {
     this._messageField = this._configPanel.querySelector('.js-message');
     this._urlBlockingList = this._configPanel.querySelector('.js-url-blocking-patterns');
     this._urlBlockingStatus = {};
+
+    // Compat: URL.searchParams isn't yet supported by Safari
     const match = location.search.match(/[?&]id=([^&]*)/);
     this._reportId = match ? match[1]: '';
 
