@@ -41,24 +41,21 @@ let fallbackReportId;
  * Start the server with an arbitrary port and open report page in the default browser.
  * @param {!Object} params A JSON contains lighthouse parameters
  * @param {!Object} results
- * @return {!Promise<string>} Promise that resolves when server is closed
+ * @return {!Object} server
  */
 function hostExperiment(params, results) {
-  return new Promise(resolve => {
-    database = new ExperimentDatabase(params.url, params.config);
-    const id = database.saveData(params.flags, results);
-    fallbackReportId = id;
+  database = new ExperimentDatabase(params.url, params.config);
+  const id = database.saveData(params.flags, results);
+  fallbackReportId = id;
 
-    const server = http.createServer(requestHandler);
-    server.listen(0);
-    server.on('listening', () => opn(`http://localhost:${server.address().port}/?id=${id}`));
-    server.on('error', err => log.error('PerformanceXServer', err.code, err));
-    server.on('close', resolve);
-    process.on('SIGINT', () => {
-      database.clear();
-      server.close();
-    });
-  });
+  const server = http.createServer(requestHandler);
+  server.on('listening', () => opn(`http://localhost:${server.address().port}/?id=${id}`));
+  server.on('error', err => log.error('PerformanceXServer', err.code, err));
+  server.on('close', () => database.clear());
+  process.on('SIGINT', () => server.close());
+  server.listen(0);
+
+  return server;
 }
 
 function requestHandler(request, response) {
