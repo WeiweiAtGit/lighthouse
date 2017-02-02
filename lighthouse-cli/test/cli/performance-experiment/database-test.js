@@ -18,6 +18,7 @@
 
 /* eslint-env mocha */
 const assert = require('assert');
+const fs = require('fs');
 
 const PerfXDatabase = require('../../../performance-experiment/experiment-database/database');
 const sampleResults = require('../../../../lighthouse-core/test/results/sample');
@@ -43,7 +44,7 @@ describe('Perf-X Database', function() {
           'deepReference': {'anObject': {'anArray': ['anElement', 'anotherElement']}}
         },
         results: {
-          generatedTime: new Date(2015, 6, 37, 0, 12, 55, 60).toJSON(),
+          generatedTime: new Date(2015, 6, 27, 0, 12, 55, 60).toJSON(),
           url: 'http://google.com/',
           else: 'someData'
         }
@@ -55,7 +56,7 @@ describe('Perf-X Database', function() {
           'disableDeviceEmulation': true
         },
         results: {
-          'generatedTime': new Date(2014, 5, 36, 23, 56, 54, 99).toJSON(),
+          'generatedTime': new Date(2014, 5, 1, 23, 56, 54, 99).toJSON(),
           'url': 'http://mdn.com/',
           'audits': [{'is-on-https': {'score': true}}],
         }
@@ -103,13 +104,13 @@ describe('Perf-X Database', function() {
       },
       {
         results: {
-          generatedTime: new Date(2015, 6, 37, 0, 12, 55, 60).toJSON(),
+          generatedTime: new Date(2015, 6, 12, 0, 6, 30, 60).toJSON(),
           url: 'http://google.com/',
         }
       },
       {
         results: {
-          'generatedTime': new Date(2014, 5, 36, 23, 56, 54, 99).toJSON(),
+          'generatedTime': new Date(2014, 2, 21, 11, 12, 33, 46).toJSON(),
           'url': 'http://mdn.com/',
         }
       }
@@ -124,5 +125,37 @@ describe('Perf-X Database', function() {
     });
 
     assert.strictEqual(Object.keys(perfXDatabase.timeStamps).length, dataSets.length);
+  });
+
+  it('can delete temp folder on request', () => {
+    const dataSets = [
+      {
+        flags: {
+          'blockedUrlPatterns': ['.css', '.jpg'],
+          'disableDeviceEmulation': false
+        },
+        results: sampleResults
+      },
+      {
+        flags: {
+          'blockedUrlPatterns': ['.js', '*'],
+          'disableCpuThrottling': true,
+          'disableNetworkThrottling': true
+        },
+        results: {
+          'generatedTime': new Date(2015, 7, 23, 23, 56, 54, 99).toJSON(),
+          'url': 'http://w3school.com/',
+          'audits': [{'is-on-https': {'score': true}}],
+        }
+      }
+    ];
+
+    dataSets.forEach(dataSet => {
+      dataSet.key = perfXDatabase.saveData({}, dataSet.results);
+    });
+    assert.ok(fs.existsSync(perfXDatabase.fsRoot));
+
+    perfXDatabase.clear();
+    assert.ok(!fs.existsSync(perfXDatabase.fsRoot));
   });
 });

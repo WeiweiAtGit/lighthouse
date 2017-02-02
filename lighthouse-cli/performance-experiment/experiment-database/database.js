@@ -32,6 +32,10 @@ class ExperimentDatabase {
     return this._timeStamps;
   }
 
+  get fsRoot() {
+    return this._fsRoot;
+  }
+
   /*
    * Save experiment data
    * @param {!Object} lhFlags
